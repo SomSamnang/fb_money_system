@@ -1,0 +1,7 @@
+body { font-family: Arial; text-align:center; background:#f2f2f2; padding:30px; }
+h1{ color:#ff4500; }
+.section{ background:#fff; padding:20px; margin:20px auto; border-radius:12px; max-width:400px; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
+h2{ color:#1877f2; margin-bottom:15px; }
+.btn{ background:#1877f2;color:#fff;padding:15px 25px;margin:8px;border:none;border-radius:8px;font-size:16px;cursor:pointer;}
+.btn:hover{ background:#145db2; }
+.thank{color:green;font-weight:bold;margin-top:10px;display:none;}
