@@ -137,7 +137,7 @@ if (isset($user_role) && $user_role === 'admin') {
         <?php endif; ?>
         
         <?php 
-        $is_system = ($current_page == 'settings.php' || $current_page == 'logs.php' || $current_page == 'health.php' || $current_page == 'server_logs.php'); 
+        $is_system = ($current_page == 'settings.php' || $current_page == 'logs.php' || $current_page == 'health.php' || $current_page == 'server_logs.php' || $current_page == 'manage_backups.php'); 
         ?>
         <a href="#systemSubmenu" class="list-group-item list-group-item-action dropdown-toggle" data-bs-toggle="collapse" aria-expanded="<?php echo $is_system ? 'true' : 'false'; ?>"><i class="bi bi-gear-fill me-2 text-secondary"></i> <span>System</span></a>
         <div class="collapse <?php echo $is_system ? 'show' : ''; ?>" id="systemSubmenu">
@@ -145,6 +145,7 @@ if (isset($user_role) && $user_role === 'admin') {
             <a href="logs.php" class="list-group-item list-group-item-action ps-4 small <?php echo ($current_page == 'logs.php') ? 'active' : ''; ?>"><i class="bi bi-journal-text me-2 text-warning"></i> <span>System Logs</span></a>
             <a href="health.php" class="list-group-item list-group-item-action ps-4 small <?php echo ($current_page == 'health.php') ? 'active' : ''; ?>" title="System Health"><i class="bi bi-heart-pulse me-2 text-danger"></i> <span>System Health</span></a>
             <a href="server_logs.php" class="list-group-item list-group-item-action ps-4 small <?php echo ($current_page == 'server_logs.php') ? 'active' : ''; ?>" title="Server Logs"><i class="bi bi-terminal me-2 text-secondary"></i> <span>Server Logs</span></a>
+            <a href="manage_backups.php" class="list-group-item list-group-item-action ps-4 small <?php echo ($current_page == 'manage_backups.php') ? 'active' : ''; ?>" title="Manage Backups"><i class="bi bi-database-down me-2 text-info"></i> <span>Backups</span></a>
         </div>
         
         <a href="../index.php" target="_blank" class="list-group-item list-group-item-action"><i class="bi bi-globe me-2 text-light"></i> <span>View Site</span></a>
