@@ -19,31 +19,31 @@ $user_role = $u_row['role'] ?? 'editor';
 $message = "";
 $toast_class = "";
 
-// Handle update link
-if(isset($_POST['update_link'])){
+// Handle update post
+if(isset($_POST['update_post'])){
     $id = (int)$_POST['id'];
-    $new_link = $_POST['fb_link'];
-    $target = (int)$_POST['target_clicks'];
+    $new_link = $_POST['post_link'];
+    $target = (int)$_POST['target_likes'];
     $daily_limit = (int)$_POST['daily_limit'];
     $status = $_POST['status'];
     $stmt = $conn->prepare("UPDATE pages SET fb_link=?, target_clicks=?, daily_limit=?, status=?, paused_by_limit=0 WHERE id=?");
     $stmt->bind_param("siisi",$new_link,$target,$daily_limit,$status,$id);
     $stmt->execute();
     $stmt->close();
-    logAction($conn, $_SESSION['admin'], 'Update Follower Page', "Updated page ID: $id");
-    $message = "Campaign updated successfully!";
+    logAction($conn, $_SESSION['admin'], 'Update Post', "Updated post ID: $id");
+    $message = "Post updated successfully!";
     $toast_class = "bg-success";
 }
 
-// Handle delete page
-if(isset($_POST['delete_page'])){
+// Handle delete post
+if(isset($_POST['delete_post'])){
     $id = (int)$_POST['id'];
     $stmt = $conn->prepare("DELETE FROM pages WHERE id=?");
     $stmt->bind_param("i",$id);
     $stmt->execute();
     $stmt->close();
-    logAction($conn, $_SESSION['admin'], 'Delete Follower Page', "Deleted page ID: $id");
-    $message = "Campaign deleted successfully!";
+    logAction($conn, $_SESSION['admin'], 'Delete Post', "Deleted post ID: $id");
+    $message = "Post deleted successfully!";
     $toast_class = "bg-danger";
 }
 
@@ -55,8 +55,8 @@ if (!in_array($status_filter, $allowed_statuses)) {
     $status_filter = '';
 }
 
-// Fetch Follower Pages
-$sql = "SELECT * FROM pages WHERE type='follower'";
+// Fetch Posts
+$sql = "SELECT * FROM pages WHERE type='post'";
 if ($status_filter) {
     $sql .= " AND status = '" . $conn->real_escape_string($status_filter) . "'";
 }
@@ -74,7 +74,7 @@ if ($pages_result) {
 }
 
 // Fetch stats
-$sql_stats = "SELECT page,type,COUNT(*) as total FROM clicks GROUP BY page,type";
+$sql_stats = "SELECT page,type,COUNT(*) as total FROM clicks WHERE type='post' GROUP BY page,type";
 $stats_result = $conn->query($sql_stats);
 $clicks = [];
 if ($stats_result) {
@@ -88,7 +88,7 @@ if ($stats_result) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manage Followers - FB Money System</title>
+<title>Manage Posts - FB Money System</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <style>
@@ -117,20 +117,20 @@ body.dark-mode .form-control, body.dark-mode .form-select { background: #2d2d2d;
         <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom mb-4">
             <div class="container-fluid">
                 <button class="btn btn-primary" id="sidebarToggle">☰ Menu</button>
-                <span class="navbar-text ms-auto fw-bold text-primary">Manage Followers</span>
+                <span class="navbar-text ms-auto fw-bold text-primary">Manage Posts</span>
                 <button class="btn btn-sm btn-outline-secondary ms-3" id="darkModeToggle">🌙</button>
             </div>
         </nav>
         <div class="container-fluid px-4">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5">
                 <div>
-                    <h2 class="fw-bold text-dark mb-1">👥 Manage Followers</h2>
-                    <p class="text-muted mb-0">Track and boost your Facebook page followers.</p>
+                    <h2 class="fw-bold text-dark mb-1">📝 Manage Posts</h2>
+                    <p class="text-muted mb-0">Track and boost your Facebook posts.</p>
                 </div>
                 <div class="d-flex gap-3 mt-3 mt-md-0">
                     <form method="GET" class="d-flex align-items-center position-relative">
                         <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" style="z-index: 5;"></i>
-                        <input type="text" name="search" class="form-control form-control-lg shadow-sm border-0 rounded-pill ps-5 me-2" placeholder="Search pages..." value="<?php echo htmlspecialchars($search); ?>" style="min-width: 200px;">
+                        <input type="text" name="search" class="form-control form-control-lg shadow-sm border-0 rounded-pill ps-5 me-2" placeholder="Search posts..." value="<?php echo htmlspecialchars($search); ?>" style="min-width: 200px;">
                         <select name="status" class="form-select form-select-lg shadow-sm border-0 rounded-pill ps-4 pe-5" onchange="this.form.submit()" style="min-width: 180px;">
                             <option value="">All Statuses</option>
                             <option value="active" <?php if($status_filter == 'active') echo 'selected'; ?>>Active</option>
@@ -138,21 +138,26 @@ body.dark-mode .form-control, body.dark-mode .form-select { background: #2d2d2d;
                             <option value="completed" <?php if($status_filter == 'completed') echo 'selected'; ?>>Completed</option>
                         </select>
                         <?php if($search || $status_filter): ?>
-                            <a href="followers_list.php" class="btn btn-light btn-lg rounded-circle shadow-sm ms-2 d-flex align-items-center justify-content-center text-danger" style="width: 48px; height: 48px;" title="Clear Filters"><i class="bi bi-x-lg"></i></a>
+                            <a href="posts_list.php" class="btn btn-light btn-lg rounded-circle shadow-sm ms-2 d-flex align-items-center justify-content-center text-danger" style="width: 48px; height: 48px;" title="Clear Filters"><i class="bi bi-x-lg"></i></a>
                         <?php endif; ?>
                     </form>
-                    <a href="boost_follower.php" class="btn btn-success btn-lg rounded-pill shadow-sm px-4" style="background: linear-gradient(135deg, #2af598 0%, #009efd 100%); border:none;"><i class="bi bi-plus-lg me-2"></i>Add New</a>
+                    <a href="boost_post.php" class="btn btn-primary btn-lg rounded-pill shadow-sm px-4" style="background: linear-gradient(135deg, #6610f2 0%, #520dc2 100%); border:none;"><i class="bi bi-plus-lg me-2"></i>Add New</a>
                 </div>
             </div>
 
             <div class="row g-4">
                 <?php if(empty($pages)): ?>
-                    <div class="col-12 text-center py-5 text-muted">No follower campaigns found matching your criteria.</div>
+                    <div class="col-12 text-center py-5 text-muted">No post campaigns found matching your criteria.</div>
                 <?php else: ?>
                     <?php foreach($pages as $name=>$page): 
-                        $follow = $clicks[$name]['follow'] ?? 0;
-                        $share  = $clicks[$name]['share'] ?? 0;
-                        $total_clicks = $follow + $share;
+                        // Note: For posts, we might track 'like' or 'share' in clicks table, or just generic 'post' type clicks.
+                        // Assuming 'post' type clicks are stored with type='post' or similar in track_click.php logic if updated.
+                        // For now, let's assume we just count total clicks for this page name.
+                        $total_clicks = 0;
+                        if(isset($clicks[$name])) {
+                            foreach($clicks[$name] as $t => $c) $total_clicks += $c;
+                        }
+                        
                         $target = isset($page['target_clicks']) ? (int)$page['target_clicks'] : 0;
                         $daily_limit = isset($page['daily_limit']) ? (int)$page['daily_limit'] : 0;
                         $progress = ($target > 0) ? min(100, round(($total_clicks / $target) * 100)) : 0;
@@ -160,9 +165,9 @@ body.dark-mode .form-control, body.dark-mode .form-select { background: #2d2d2d;
                     ?>
                     <div class="col-md-4">
                         <div class="card border-0 shadow-lg rounded-4 h-100 overflow-hidden">
-                            <div class="card-header text-white p-3" style="background: linear-gradient(135deg, #2af598 0%, #009efd 100%); border:none;">
+                            <div class="card-header text-white p-3" style="background: linear-gradient(135deg, #6610f2 0%, #520dc2 100%); border:none;">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0 text-truncate" style="max-width: 70%;" title="<?php echo htmlspecialchars($name); ?>"><i class="bi bi-facebook me-2"></i><?php echo htmlspecialchars($name); ?></h5>
+                                    <h5 class="mb-0 text-truncate" style="max-width: 70%;" title="<?php echo htmlspecialchars($name); ?>"><i class="bi bi-postcard-heart me-2"></i><?php echo htmlspecialchars($name); ?></h5>
                                     <span class="badge bg-white text-primary shadow-sm"><?php echo ucfirst($status); ?></span>
                                 </div>
                             </div>
@@ -170,16 +175,16 @@ body.dark-mode .form-control, body.dark-mode .form-select { background: #2d2d2d;
                                 <!-- Progress -->
                                 <div class="mb-4">
                                     <div class="d-flex justify-content-between small fw-bold text-muted mb-1">
-                                        <span><i class="bi bi-people-fill me-1"></i>Followers Gained</span>
-                                        <span><?php echo number_format($follow); ?> <?php if($target > 0) echo '/ ' . number_format($target); ?></span>
+                                        <span><i class="bi bi-hand-thumbs-up-fill me-1"></i>Interactions</span>
+                                        <span><?php echo number_format($total_clicks); ?> <?php if($target > 0) echo '/ ' . number_format($target); ?></span>
                                     </div>
                                     <?php if($target > 0): ?>
                                     <div class="progress rounded-pill" style="height: 10px; background-color: #e9ecef;">
-                                        <div class="progress-bar" role="progressbar" style="width: <?php echo $progress; ?>%; background: linear-gradient(90deg, #2af598, #009efd);" aria-valuenow="<?php echo $progress; ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                                        <div class="progress-bar" role="progressbar" style="width: <?php echo $progress; ?>%; background: linear-gradient(90deg, #6610f2, #520dc2);" aria-valuenow="<?php echo $progress; ?>" aria-valuemin="0" aria-valuemax="100"></div>
                                     </div>
                                     <?php else: ?>
                                     <div class="progress rounded-pill" style="height: 10px; background-color: #e9ecef;">
-                                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%; background: linear-gradient(90deg, #2af598, #009efd);"></div>
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%; background: linear-gradient(90deg, #6610f2, #520dc2);"></div>
                                     </div>
                                     <?php endif; ?>
                                 </div>
@@ -191,14 +196,14 @@ body.dark-mode .form-control, body.dark-mode .form-select { background: #2d2d2d;
                                         <label class="form-label small text-muted fw-bold text-uppercase">Settings</label>
                                         <div class="input-group mb-2">
                                             <span class="input-group-text bg-light border-end-0"><i class="bi bi-link-45deg text-muted"></i></span>
-                                            <input type="text" name="fb_link" class="form-control bg-light border-start-0" value="<?php echo htmlspecialchars($page['fb_link']); ?>" required placeholder="URL">
+                                            <input type="text" name="post_link" class="form-control bg-light border-start-0" value="<?php echo htmlspecialchars($page['fb_link']); ?>" required placeholder="URL">
                                             <a href="<?php echo htmlspecialchars($page['fb_link']); ?>" target="_blank" class="btn btn-light border-start-0 border"><i class="bi bi-box-arrow-up-right text-muted"></i></a>
                                         </div>
                                         <div class="row g-2 mb-2">
                                             <div class="col-6">
                                                 <div class="input-group">
                                                     <span class="input-group-text bg-light border-end-0 px-2"><i class="bi bi-bullseye text-muted"></i></span>
-                                                    <input type="number" name="target_clicks" class="form-control bg-light border-start-0 px-2" value="<?php echo $target; ?>" placeholder="Target">
+                                                    <input type="number" name="target_likes" class="form-control bg-light border-start-0 px-2" value="<?php echo $target; ?>" placeholder="Target">
                                                 </div>
                                             </div>
                                             <div class="col-6">
@@ -219,8 +224,8 @@ body.dark-mode .form-control, body.dark-mode .form-select { background: #2d2d2d;
                                     </div>
 
                                     <div class="d-grid gap-2">
-                                        <button type="submit" name="update_link" class="btn btn-primary shadow-sm" style="background: linear-gradient(135deg, #2af598 0%, #009efd 100%); border:none;"><i class="bi bi-save me-2"></i>Update</button>
-                                        <button type="submit" name="delete_page" class="btn btn-light text-danger shadow-sm" onclick="return confirm('Are you sure?');"><i class="bi bi-trash me-2"></i>Delete</button>
+                                        <button type="submit" name="update_post" class="btn btn-primary shadow-sm" style="background: linear-gradient(135deg, #6610f2 0%, #520dc2 100%); border:none;"><i class="bi bi-save me-2"></i>Update</button>
+                                        <button type="submit" name="delete_post" class="btn btn-light text-danger shadow-sm" onclick="return confirm('Are you sure?');"><i class="bi bi-trash me-2"></i>Delete</button>
                                     </div>
                                 </form>
                             </div>

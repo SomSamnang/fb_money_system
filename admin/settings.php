@@ -25,6 +25,11 @@ $msg_type = "";
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_settings'])) {
     $site_title = trim($_POST['site_title']);
     $sidebar_color = trim($_POST['sidebar_color']);
+    $maintenance_mode = isset($_POST['maintenance_mode']) ? 'on' : 'off';
+    $maintenance_message = trim($_POST['maintenance_message']);
+    $maintenance_end_time = $_POST['maintenance_end_time'];
+    $terms_of_service = $_POST['terms_of_service'];
+    $privacy_policy = $_POST['privacy_policy'];
     
     // Upsert Site Title
     $stmt = $conn->prepare("INSERT INTO settings (setting_key, setting_value) VALUES ('site_title', ?) ON DUPLICATE KEY UPDATE setting_value = ?");
@@ -38,6 +43,46 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_settings'])) {
     $stmt = $conn->prepare("INSERT INTO settings (setting_key, setting_value) VALUES ('sidebar_color', ?) ON DUPLICATE KEY UPDATE setting_value = ?");
     if ($stmt) {
         $stmt->bind_param("ss", $sidebar_color, $sidebar_color);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    // Upsert Maintenance Mode
+    $stmt = $conn->prepare("INSERT INTO settings (setting_key, setting_value) VALUES ('maintenance_mode', ?) ON DUPLICATE KEY UPDATE setting_value = ?");
+    if ($stmt) {
+        $stmt->bind_param("ss", $maintenance_mode, $maintenance_mode);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    // Upsert Maintenance Message
+    $stmt = $conn->prepare("INSERT INTO settings (setting_key, setting_value) VALUES ('maintenance_message', ?) ON DUPLICATE KEY UPDATE setting_value = ?");
+    if ($stmt) {
+        $stmt->bind_param("ss", $maintenance_message, $maintenance_message);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    // Upsert Maintenance End Time
+    $stmt = $conn->prepare("INSERT INTO settings (setting_key, setting_value) VALUES ('maintenance_end_time', ?) ON DUPLICATE KEY UPDATE setting_value = ?");
+    if ($stmt) {
+        $stmt->bind_param("ss", $maintenance_end_time, $maintenance_end_time);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    // Upsert Terms of Service
+    $stmt = $conn->prepare("INSERT INTO settings (setting_key, setting_value) VALUES ('terms_of_service', ?) ON DUPLICATE KEY UPDATE setting_value = ?");
+    if ($stmt) {
+        $stmt->bind_param("ss", $terms_of_service, $terms_of_service);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    // Upsert Privacy Policy
+    $stmt = $conn->prepare("INSERT INTO settings (setting_key, setting_value) VALUES ('privacy_policy', ?) ON DUPLICATE KEY UPDATE setting_value = ?");
+    if ($stmt) {
+        $stmt->bind_param("ss", $privacy_policy, $privacy_policy);
         $stmt->execute();
         $stmt->close();
     }
@@ -103,6 +148,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['restore_database'])) {
 $current_title = "FB Money System"; // Default
 $current_sidebar_color = "#4e73df"; // Default
 $current_notif_sound = "";
+$current_maintenance = "off";
+$current_maintenance_msg = "We are currently performing scheduled maintenance.<br>We will be back shortly.";
+$current_maintenance_end = "";
+$current_tos = <<<EOT
+<p><strong>1. Acceptance</strong><br>By using this system, you agree to these terms.</p>
+<p><strong>2. Account</strong><br>You are responsible for your account security.</p>
+<p><strong>3. Conduct</strong><br>You agree not to misuse the system.</p>
+EOT;
+
+$current_pp = <<<EOT
+<p><strong>Privacy Policy</strong><br>Your privacy is important to us.</p>
+<p>We collect basic information to provide our services.</p>
+EOT;
 
 $res = $conn->query("SELECT * FROM settings");
 if ($res) {
@@ -110,6 +168,16 @@ if ($res) {
         if($row['setting_key'] == 'site_title') $current_title = $row['setting_value'];
         if($row['setting_key'] == 'sidebar_color') $current_sidebar_color = $row['setting_value'];
         if($row['setting_key'] == 'notification_sound') $current_notif_sound = $row['setting_value'];
+        if($row['setting_key'] == 'maintenance_mode') $current_maintenance = $row['setting_value'];
+        if($row['setting_key'] == 'maintenance_message') $current_maintenance_msg = $row['setting_value'];
+        if($row['setting_key'] == 'maintenance_end_time') {
+            $current_maintenance_end = $row['setting_value'];
+            if ($current_maintenance_end) {
+                $current_maintenance_end = date('Y-m-d\TH:i', strtotime($current_maintenance_end));
+            }
+        }
+        if($row['setting_key'] == 'terms_of_service') $current_tos = $row['setting_value'];
+        if($row['setting_key'] == 'privacy_policy') $current_pp = $row['setting_value'];
     }
 }
 ?>
@@ -185,48 +253,100 @@ body.dark-mode #page-loader { background: #121212; }
             <div class="container-fluid">
                 <button class="btn btn-primary" id="sidebarToggle">☰ Menu</button>
                 <span class="navbar-text ms-auto fw-bold text-primary">Site Settings</span>
+                <button class="btn btn-sm btn-outline-secondary ms-3" id="darkModeToggle">🌙</button>
             </div>
         </nav>
 
         <div class="container-fluid px-4">
-            <div class="card p-4">
-                <h4 class="mb-3">⚙️ Global Configuration</h4>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5">
+                <div>
+                    <h2 class="fw-bold text-dark mb-1">⚙️ Site Settings</h2>
+                    <p class="text-muted mb-0">Configure global system preferences.</p>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5">
+                <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #4e73df 0%, #224abe 100%); border:none;">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-sliders me-2"></i>Global Configuration</h5>
+                </div>
+                <div class="card-body p-4">
                 <form method="POST" enctype="multipart/form-data">
-                    <div class="mb-3">
-                        <label class="form-label">Site Title</label>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted">Site Title</label>
                         <input type="text" class="form-control" name="site_title" value="<?php echo htmlspecialchars($current_title); ?>" required>
                         <div class="form-text">This title will appear on the main index page.</div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Sidebar Color</label>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted">Sidebar Color</label>
                         <input type="color" class="form-control form-control-color" name="sidebar_color" value="<?php echo htmlspecialchars($current_sidebar_color); ?>" title="Choose your color">
                         <div class="form-text">Select a custom background color for the admin sidebar.</div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Notification Sound</label>
+                    <div class="mb-4 form-check form-switch p-3 bg-light rounded border">
+                        <input class="form-check-input" type="checkbox" id="maintenanceMode" name="maintenance_mode" <?php echo ($current_maintenance == 'on') ? 'checked' : ''; ?>>
+                        <label class="form-check-label fw-bold ms-2" for="maintenanceMode">Maintenance Mode</label>
+                        <div class="form-text text-danger ms-2">When enabled, only Admins can access the public site.</div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted">Maintenance Message</label>
+                        <textarea class="form-control" name="maintenance_message" rows="3"><?php echo htmlspecialchars($current_maintenance_msg); ?></textarea>
+                        <div class="form-text">Custom message to display when maintenance mode is active. HTML allowed.</div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted">Maintenance End Time (Optional)</label>
+                        <input type="datetime-local" class="form-control" name="maintenance_end_time" value="<?php echo htmlspecialchars($current_maintenance_end); ?>">
+                        <div class="form-text">Set a target time for maintenance completion to show a countdown timer.</div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted">Terms of Service Content</label>
+                        <textarea class="form-control" name="terms_of_service" rows="6"><?php echo htmlspecialchars($current_tos); ?></textarea>
+                        <div class="form-text">HTML content for the Terms of Service modal.</div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted">Privacy Policy Content</label>
+                        <textarea class="form-control" name="privacy_policy" rows="6"><?php echo htmlspecialchars($current_pp); ?></textarea>
+                        <div class="form-text">HTML content for the Privacy Policy modal.</div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted">Notification Sound</label>
                         <input type="file" class="form-control" name="notification_sound" accept=".mp3,.wav,.ogg">
                         <div class="form-text">Upload a custom sound file (MP3, WAV, OGG). Leave empty to keep current.</div>
                         <?php if($current_notif_sound): ?>
                             <div class="mt-2"><small class="text-success"><i class="bi bi-check-circle"></i> Current: <?php echo htmlspecialchars($current_notif_sound); ?></small></div>
                         <?php endif; ?>
                     </div>
-                    <button type="submit" name="update_settings" class="btn btn-primary">Save Changes</button>
+                    <button type="submit" name="update_settings" class="btn btn-primary shadow-sm px-4"><i class="bi bi-save me-2"></i>Save Changes</button>
                 </form>
+                </div>
+            </div>
                 
-                <hr class="my-4">
-                <h5 class="mb-3">💾 Database Backup</h5>
-                <p class="text-muted small">Download a full SQL backup of your database structure and data.</p>
-                <a href="backup.php" class="btn btn-success"><i class="bi bi-download me-2"></i>Download SQL Backup</a>
-                
-                <hr class="my-4">
-                <h5 class="mb-3 text-danger">⚠️ Restore Database</h5>
-                <p class="text-muted small">Upload a SQL file to restore the database. <strong>Warning: This will overwrite existing data!</strong></p>
-                <form method="POST" enctype="multipart/form-data">
-                    <div class="input-group">
-                        <input type="file" class="form-control" name="restore_file" accept=".sql" required>
-                        <button type="submit" name="restore_database" class="btn btn-danger" onclick="return confirm('Are you sure? This will overwrite all current data!');"><i class="bi bi-upload me-2"></i>Restore</button>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-lg rounded-4 overflow-hidden h-100">
+                        <div class="card-header bg-success text-white p-4 border-0" style="background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);">
+                            <h5 class="mb-0 fw-bold"><i class="bi bi-database-down me-2"></i>Database Backup</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <p class="text-muted">Download a full SQL backup of your database structure and data.</p>
+                            <a href="backup.php" class="btn btn-success w-100 shadow-sm"><i class="bi bi-download me-2"></i>Download SQL Backup</a>
+                        </div>
                     </div>
-                </form>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-lg rounded-4 overflow-hidden h-100">
+                        <div class="card-header bg-danger text-white p-4 border-0" style="background: linear-gradient(135deg, #e74a3b 0%, #c0392b 100%);">
+                            <h5 class="mb-0 fw-bold"><i class="bi bi-database-up me-2"></i>Restore Database</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <p class="text-muted">Upload a SQL file to restore. <strong>Warning: Overwrites data!</strong></p>
+                            <form method="POST" enctype="multipart/form-data">
+                                <div class="input-group">
+                                    <input type="file" class="form-control" name="restore_file" accept=".sql" required>
+                                    <button type="submit" name="restore_database" class="btn btn-danger shadow-sm" onclick="return confirm('Are you sure? This will overwrite all current data!');"><i class="bi bi-upload me-2"></i>Restore</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -276,6 +396,19 @@ document.getElementById('page-content-wrapper').addEventListener('click', functi
 document.getElementById('sidebarClose').addEventListener('click', function(e) {
     e.preventDefault();
     document.getElementById('wrapper').classList.remove('toggled');
+});
+
+// Dark Mode Toggle
+const toggle = document.getElementById('darkModeToggle');
+const body = document.body;
+if(localStorage.getItem('darkMode') === 'enabled'){
+    body.classList.add('dark-mode');
+    toggle.textContent = '☀️';
+}
+toggle.addEventListener('click', () => {
+    body.classList.toggle('dark-mode');
+    localStorage.setItem('darkMode', body.classList.contains('dark-mode') ? 'enabled' : 'disabled');
+    toggle.textContent = body.classList.contains('dark-mode') ? '☀️' : '🌙';
 });
 
 // Back to Top

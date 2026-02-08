@@ -8,6 +8,23 @@ if (isset($_SESSION['user_id'])) {
 }
 
 $error = "";
+
+// Fetch Settings
+$settings_res = $conn->query("SELECT * FROM settings WHERE setting_key IN ('terms_of_service', 'privacy_policy')");
+$settings = [];
+while($row = $settings_res->fetch_assoc()) { $settings[$row['setting_key']] = $row['setting_value']; }
+
+$default_tos = <<<EOT
+<p><strong>1. Acceptance</strong><br>By using this system, you agree to these terms.</p>
+<p><strong>2. Account</strong><br>You are responsible for your account security.</p>
+<p><strong>3. Conduct</strong><br>You agree not to misuse the system.</p>
+EOT;
+
+$default_pp = "<p><strong>Privacy Policy</strong><br>Your privacy is important to us.</p>";
+
+$tos_content = $settings['terms_of_service'] ?? $default_tos;
+$pp_content = $settings['privacy_policy'] ?? $default_pp;
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = trim($_POST['username']);
     $email = trim($_POST['email']);
@@ -15,7 +32,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $confirm = $_POST['confirm_password'];
     $referral_input = isset($_POST['referral_code']) ? trim($_POST['referral_code']) : '';
 
-    if (empty($username) || empty($email) || empty($password)) {
+    if (!isset($_POST['terms'])) {
+        $error = "You must agree to the Terms and Privacy Policy!";
+    } elseif (empty($username) || empty($email) || empty($password)) {
         $error = "All fields are required!";
     } elseif ($password !== $confirm) {
         $error = "Passwords do not match!";
@@ -82,6 +101,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <div class="mb-3"><input type="password" name="password" class="form-control" placeholder="Password" required></div>
                         <div class="mb-3"><input type="password" name="confirm_password" class="form-control" placeholder="Confirm Password" required></div>
                         <div class="mb-3"><input type="text" name="referral_code" class="form-control" placeholder="Referral Code (Optional)" value="<?php echo isset($_GET['ref']) ? htmlspecialchars($_GET['ref']) : ''; ?>"></div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="terms" name="terms" required>
+                            <label class="form-check-label small" for="terms">I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms</a> & <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">Privacy Policy</a></label>
+                        </div>
                         <button type="submit" class="btn btn-primary w-100">Sign Up</button>
                     </form>
                     <div class="text-center mt-3"><a href="login_user.php">Already have an account? Login</a></div>
@@ -91,5 +114,42 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </div>
 </div>
+
+<!-- Terms Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Terms of Service</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <?php echo $tos_content; ?>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Privacy Modal -->
+<div class="modal fade" id="privacyModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Privacy Policy</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <?php echo $pp_content; ?>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -83,35 +83,45 @@ body { background:#f8f9fc; font-family: 'Segoe UI', sans-serif; overflow-x: hidd
             </div>
         </nav>
         <div class="container-fluid px-4">
-            <div class="card p-4">
-                <table class="table table-hover">
-                    <thead><tr><th>Date</th><th>User</th><th>Reward</th><th>Cost</th><th>Status</th><th>Action</th></tr></thead>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5">
+                <div>
+                    <h2 class="fw-bold text-dark mb-1">🎁 Redemption Requests</h2>
+                    <p class="text-muted mb-0">Approve or reject user reward claims.</p>
+                </div>
+            </div>
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5">
+                <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #e74a3b 0%, #c0392b 100%); border:none;">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-list-check me-2"></i>Pending Requests</h5>
+                </div>
+                <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light"><tr><th class="ps-4 py-3">Date</th><th>User</th><th>Reward</th><th>Cost</th><th>Status</th><th class="text-end pe-4">Action</th></tr></thead>
                     <tbody>
                         <?php while($r = $redemptions->fetch_assoc()): ?>
                         <tr>
-                            <td><?php echo date("M d, Y", strtotime($r['created_at'])); ?></td>
-                            <td><?php echo htmlspecialchars($r['username']); ?></td>
-                            <td><?php echo htmlspecialchars($r['reward_name']); ?></td>
-                            <td><?php echo number_format($r['points_cost']); ?></td>
+                            <td class="ps-4 text-muted small"><?php echo date("M d, Y", strtotime($r['created_at'])); ?></td>
+                            <td class="fw-bold text-primary"><?php echo htmlspecialchars($r['username']); ?></td>
+                            <td class="text-dark fw-bold"><?php echo htmlspecialchars($r['reward_name']); ?></td>
+                            <td><span class="badge bg-warning text-dark"><?php echo number_format($r['points_cost']); ?> Pts</span></td>
                             <td>
                                 <span class="badge <?php echo $r['status']=='approved'?'bg-success':($r['status']=='rejected'?'bg-danger':'bg-warning text-dark'); ?>">
                                     <?php echo ucfirst($r['status']); ?>
                                 </span>
                             </td>
-                            <td>
+                            <td class="text-end pe-4">
                                 <?php if($r['status'] == 'pending'): ?>
                                 <form method="POST" class="d-inline">
                                     <input type="hidden" name="id" value="<?php echo $r['id']; ?>">
                                     <input type="hidden" name="user_id" value="<?php echo $r['user_id']; ?>">
                                     <input type="hidden" name="cost" value="<?php echo $r['points_cost']; ?>">
-                                    <button type="submit" name="update_status" value="approved" class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i></button>
+                                    <button type="submit" name="update_status" value="approved" class="btn btn-sm btn-success shadow-sm me-1"><i class="bi bi-check-lg"></i></button>
                                     <input type="hidden" name="status" value="approved">
                                 </form>
                                 <form method="POST" class="d-inline">
                                     <input type="hidden" name="id" value="<?php echo $r['id']; ?>">
                                     <input type="hidden" name="user_id" value="<?php echo $r['user_id']; ?>">
                                     <input type="hidden" name="cost" value="<?php echo $r['points_cost']; ?>">
-                                    <button type="submit" name="update_status" value="rejected" class="btn btn-sm btn-danger"><i class="bi bi-x-lg"></i></button>
+                                    <button type="submit" name="update_status" value="rejected" class="btn btn-sm btn-danger shadow-sm"><i class="bi bi-x-lg"></i></button>
                                     <input type="hidden" name="status" value="rejected">
                                 </form>
                                 <?php endif; ?>
@@ -120,6 +130,7 @@ body { background:#f8f9fc; font-family: 'Segoe UI', sans-serif; overflow-x: hidd
                         <?php endwhile; ?>
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
     </div>

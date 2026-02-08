@@ -12,6 +12,9 @@ require_once __DIR__ . "/../config/db.php";
 // Only for pages that were specifically paused by the limit logic
 $sql = "UPDATE pages SET status = 'active', paused_by_limit = 0 WHERE paused_by_limit = 1";
 
+// Update videos as well
+$conn->query("UPDATE videos SET status = 'active', paused_by_limit = 0 WHERE paused_by_limit = 1");
+
 if ($conn->query($sql)) {
     $affected = $conn->affected_rows;
     echo "Success: Resumed $affected campaigns that hit their daily limit.\n";

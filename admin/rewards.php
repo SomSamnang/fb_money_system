@@ -92,48 +92,62 @@ body { background:#f8f9fc; font-family: 'Segoe UI', sans-serif; overflow-x: hidd
             </div>
         </nav>
         <div class="container-fluid px-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5">
+                <div>
+                    <h2 class="fw-bold text-dark mb-1">🎁 Manage Rewards</h2>
+                    <p class="text-muted mb-0">Create and manage redeemable items for users.</p>
+                </div>
+            </div>
             <div class="row">
                 <div class="col-md-4">
-                    <div class="card p-4">
-                        <h5 class="mb-3">Add New Reward</h5>
+                    <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-4">
+                        <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%); border:none;">
+                            <h5 class="mb-0 fw-bold"><i class="bi bi-plus-circle me-2"></i>Add Reward</h5>
+                        </div>
+                        <div class="card-body p-4">
                         <form method="POST" enctype="multipart/form-data">
-                            <div class="mb-3"><label>Name</label><input type="text" name="name" class="form-control" required></div>
-                            <div class="mb-3"><label>Description</label><textarea name="description" class="form-control" rows="2"></textarea></div>
-                            <div class="mb-3"><label>Points Cost</label><input type="number" name="points_cost" class="form-control" required></div>
-                            <div class="mb-3"><label>Stock (-1 for infinite)</label><input type="number" name="stock" class="form-control" value="-1"></div>
-                            <div class="mb-3"><label>Image</label><input type="file" name="image" class="form-control"></div>
-                            <button type="submit" name="add_reward" class="btn btn-primary w-100">Add Reward</button>
+                            <div class="mb-3"><label class="form-label fw-bold small text-muted">Name</label><input type="text" name="name" class="form-control" placeholder="e.g. $5 Gift Card" required></div>
+                            <div class="mb-3"><label class="form-label fw-bold small text-muted">Description</label><textarea name="description" class="form-control" rows="2" placeholder="Short description..."></textarea></div>
+                            <div class="mb-3"><label class="form-label fw-bold small text-muted">Points Cost</label><div class="input-group"><span class="input-group-text bg-light"><i class="bi bi-coin"></i></span><input type="number" name="points_cost" class="form-control" placeholder="100" required></div></div>
+                            <div class="mb-3"><label class="form-label fw-bold small text-muted">Stock (-1 for infinite)</label><div class="input-group"><span class="input-group-text bg-light"><i class="bi bi-box-seam"></i></span><input type="number" name="stock" class="form-control" value="-1"></div></div>
+                            <div class="mb-3"><label class="form-label fw-bold small text-muted">Image</label><input type="file" name="image" class="form-control"></div>
+                            <button type="submit" name="add_reward" class="btn btn-success w-100 fw-bold shadow-sm" style="background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%); border:none;"><i class="bi bi-plus-lg me-1"></i> Add Reward</button>
                         </form>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-8">
-                    <div class="card p-4">
-                        <h5 class="mb-3">Existing Rewards</h5>
-                        <table class="table table-hover">
-                            <thead><tr><th>Image</th><th>Name</th><th>Cost</th><th>Stock</th><th>Action</th></tr></thead>
+                    <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-4">
+                        <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #4e73df 0%, #224abe 100%); border:none;">
+                            <h5 class="mb-0 fw-bold"><i class="bi bi-list-ul me-2"></i>Existing Rewards</h5>
+                        </div>
+                        <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light"><tr><th class="ps-4 py-3">Image</th><th>Name</th><th>Cost</th><th>Stock</th><th class="text-end pe-4">Action</th></tr></thead>
                             <tbody>
                                 <?php while($r = $rewards->fetch_assoc()): ?>
                                 <tr>
-                                    <td>
+                                    <td class="ps-4">
                                         <?php if($r['image']): ?>
-                                            <img src="uploads/<?php echo htmlspecialchars($r['image']); ?>" width="50" height="50" style="object-fit:cover; border-radius:5px;">
+                                            <img src="uploads/<?php echo htmlspecialchars($r['image']); ?>" width="50" height="50" class="rounded shadow-sm" style="object-fit:cover;">
                                         <?php else: ?>
-                                            <span class="text-muted">No Img</span>
+                                            <div class="bg-light rounded d-flex align-items-center justify-content-center text-muted small" style="width:50px; height:50px;">No Img</div>
                                         <?php endif; ?>
                                     </td>
-                                    <td><?php echo htmlspecialchars($r['name']); ?></td>
-                                    <td><?php echo number_format($r['points_cost']); ?></td>
-                                    <td><?php echo $r['stock'] == -1 ? '∞' : $r['stock']; ?></td>
-                                    <td>
+                                    <td class="fw-bold text-dark"><?php echo htmlspecialchars($r['name']); ?></td>
+                                    <td><span class="badge bg-warning text-dark"><i class="bi bi-coin me-1"></i><?php echo number_format($r['points_cost']); ?></span></td>
+                                    <td><span class="badge bg-secondary bg-opacity-10 text-secondary"><?php echo $r['stock'] == -1 ? '∞ Infinite' : $r['stock']; ?></span></td>
+                                    <td class="text-end pe-4">
                                         <form method="POST" onsubmit="return confirm('Delete this reward?');">
                                             <input type="hidden" name="id" value="<?php echo $r['id']; ?>">
-                                            <button type="submit" name="delete_reward" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
+                                            <button type="submit" name="delete_reward" class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash-fill"></i></button>
                                         </form>
                                     </td>
                                 </tr>
                                 <?php endwhile; ?>
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
             </div>

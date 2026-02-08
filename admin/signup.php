@@ -10,6 +10,22 @@ if (isset($_SESSION['admin'])) {
 
 $error = "";
 
+// Fetch Settings
+$settings_res = $conn->query("SELECT * FROM settings WHERE setting_key IN ('terms_of_service', 'privacy_policy')");
+$settings = [];
+while($row = $settings_res->fetch_assoc()) { $settings[$row['setting_key']] = $row['setting_value']; }
+
+$default_tos = <<<EOT
+<p><strong>1. Acceptance</strong><br>By using this system, you agree to these terms.</p>
+<p><strong>2. Account</strong><br>You are responsible for your account security.</p>
+<p><strong>3. Conduct</strong><br>You agree not to misuse the system.</p>
+EOT;
+
+$default_pp = "<p><strong>Privacy Policy</strong><br>Your privacy is important to us.</p>";
+
+$tos_content = $settings['terms_of_service'] ?? $default_tos;
+$pp_content = $settings['privacy_policy'] ?? $default_pp;
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = trim($_POST['username']);
     $email = trim($_POST['email']);
@@ -112,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </div>
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="terms" name="terms" required>
-                            <label class="form-check-label" for="terms">I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms of Service</a></label>
+                            <label class="form-check-label" for="terms">I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms of Service</a> and <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">Privacy Policy</a></label>
                         </div>
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="remember" name="remember">
@@ -139,9 +155,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <p><strong>1. Acceptance</strong><br>By using this system, you agree to these terms.</p>
-        <p><strong>2. Account</strong><br>You are responsible for your account security.</p>
-        <p><strong>3. Conduct</strong><br>You agree not to misuse the system.</p>
+        <?php echo $tos_content; ?>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Privacy Modal -->
+<div class="modal fade" id="privacyModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Privacy Policy</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <?php echo $pp_content; ?>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

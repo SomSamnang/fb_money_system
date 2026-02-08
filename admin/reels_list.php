@@ -19,68 +19,71 @@ $user_role = $u_row['role'] ?? 'editor';
 $message = "";
 $toast_class = "";
 
-// Handle update link
-if(isset($_POST['update_link'])){
+// Handle Update
+if(isset($_POST['update_video'])){
     $id = (int)$_POST['id'];
-    $new_link = $_POST['fb_link'];
-    $target = (int)$_POST['target_clicks'];
     $daily_limit = (int)$_POST['daily_limit'];
     $status = $_POST['status'];
-    $stmt = $conn->prepare("UPDATE pages SET fb_link=?, target_clicks=?, daily_limit=?, status=?, paused_by_limit=0 WHERE id=?");
-    $stmt->bind_param("siisi",$new_link,$target,$daily_limit,$status,$id);
-    $stmt->execute();
+    
+    $paused_sql = "";
+    if ($status === 'active') {
+        $paused_sql = ", paused_by_limit=0";
+    }
+
+    $stmt = $conn->prepare("UPDATE videos SET daily_limit=?, status=? $paused_sql WHERE id=?");
+    $stmt->bind_param("isi", $daily_limit, $status, $id);
+    
+    if($stmt->execute()){
+        $message = "Reel updated successfully!";
+        $toast_class = "bg-success";
+        logAction($conn, $_SESSION['admin'], 'Update Reel', "Updated reel ID: $id");
+    } else {
+        $message = "Error updating reel.";
+        $toast_class = "bg-danger";
+    }
     $stmt->close();
-    logAction($conn, $_SESSION['admin'], 'Update Follower Page', "Updated page ID: $id");
-    $message = "Campaign updated successfully!";
-    $toast_class = "bg-success";
 }
 
-// Handle delete page
-if(isset($_POST['delete_page'])){
+// Handle Delete
+if(isset($_POST['delete_video'])){
     $id = (int)$_POST['id'];
-    $stmt = $conn->prepare("DELETE FROM pages WHERE id=?");
-    $stmt->bind_param("i",$id);
-    $stmt->execute();
-    $stmt->close();
-    logAction($conn, $_SESSION['admin'], 'Delete Follower Page', "Deleted page ID: $id");
-    $message = "Campaign deleted successfully!";
+    $conn->query("DELETE FROM videos WHERE id=$id");
+    $conn->query("DELETE FROM video_views WHERE video_id=$id");
+    $conn->query("DELETE FROM video_likes WHERE video_id=$id");
+    $conn->query("DELETE FROM video_comments WHERE video_id=$id");
+    $message = "Reel deleted successfully!";
     $toast_class = "bg-danger";
+    logAction($conn, $_SESSION['admin'], 'Delete Reel', "Deleted reel ID: $id");
 }
 
-// Filter Logic
+// Fetch Reels
 $search = $_GET['search'] ?? '';
-$status_filter = $_GET['status'] ?? '';
-$allowed_statuses = ['active', 'paused', 'completed'];
-if (!in_array($status_filter, $allowed_statuses)) {
-    $status_filter = '';
-}
+$platform_filter = $_GET['platform'] ?? '';
 
-// Fetch Follower Pages
-$sql = "SELECT * FROM pages WHERE type='follower'";
-if ($status_filter) {
-    $sql .= " AND status = '" . $conn->real_escape_string($status_filter) . "'";
-}
+$sql = "SELECT * FROM videos WHERE platform IN ('facebook_reel', 'instagram_reel')";
 if ($search) {
-    $sql .= " AND name LIKE '%" . $conn->real_escape_string($search) . "%'";
+    $sql .= " AND title LIKE '%" . $conn->real_escape_string($search) . "%'";
+}
+if ($platform_filter) {
+    $sql .= " AND platform = '" . $conn->real_escape_string($platform_filter) . "'";
 }
 $sql .= " ORDER BY id DESC";
-$pages_result = $conn->query($sql);
+$videos = $conn->query($sql);
 
-$pages = [];
-if ($pages_result) {
-    while($row = $pages_result->fetch_assoc()){
-        $pages[$row['name']] = $row;
-    }
+// Fetch Stats
+$views_data = [];
+$today = date('Y-m-d');
+
+// Total Views
+$t_res = $conn->query("SELECT video_id, COUNT(*) as total FROM video_views GROUP BY video_id");
+while($row = $t_res->fetch_assoc()){
+    $views_data[$row['video_id']]['total'] = $row['total'];
 }
 
-// Fetch stats
-$sql_stats = "SELECT page,type,COUNT(*) as total FROM clicks GROUP BY page,type";
-$stats_result = $conn->query($sql_stats);
-$clicks = [];
-if ($stats_result) {
-    while($row = $stats_result->fetch_assoc()){
-        $clicks[$row['page']][$row['type']] = $row['total'];
-    }
+// Daily Views
+$d_res = $conn->query("SELECT video_id, COUNT(*) as today FROM video_views WHERE DATE(viewed_at) = '$today' GROUP BY video_id");
+while($row = $d_res->fetch_assoc()){
+    $views_data[$row['video_id']]['today'] = $row['today'];
 }
 ?>
 <!DOCTYPE html>
@@ -88,7 +91,7 @@ if ($stats_result) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manage Followers - FB Money System</title>
+<title>Manage Reels - FB Money System</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <style>
@@ -117,116 +120,113 @@ body.dark-mode .form-control, body.dark-mode .form-select { background: #2d2d2d;
         <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom mb-4">
             <div class="container-fluid">
                 <button class="btn btn-primary" id="sidebarToggle">☰ Menu</button>
-                <span class="navbar-text ms-auto fw-bold text-primary">Manage Followers</span>
+                <span class="navbar-text ms-auto fw-bold text-primary">Manage Reels</span>
                 <button class="btn btn-sm btn-outline-secondary ms-3" id="darkModeToggle">🌙</button>
             </div>
         </nav>
         <div class="container-fluid px-4">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5">
                 <div>
-                    <h2 class="fw-bold text-dark mb-1">👥 Manage Followers</h2>
-                    <p class="text-muted mb-0">Track and boost your Facebook page followers.</p>
+                    <h2 class="fw-bold text-dark mb-1">🎥 Manage Reels</h2>
+                    <p class="text-muted mb-0">Track performance and manage your reel campaigns.</p>
                 </div>
                 <div class="d-flex gap-3 mt-3 mt-md-0">
                     <form method="GET" class="d-flex align-items-center position-relative">
                         <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" style="z-index: 5;"></i>
-                        <input type="text" name="search" class="form-control form-control-lg shadow-sm border-0 rounded-pill ps-5 me-2" placeholder="Search pages..." value="<?php echo htmlspecialchars($search); ?>" style="min-width: 200px;">
-                        <select name="status" class="form-select form-select-lg shadow-sm border-0 rounded-pill ps-4 pe-5" onchange="this.form.submit()" style="min-width: 180px;">
-                            <option value="">All Statuses</option>
-                            <option value="active" <?php if($status_filter == 'active') echo 'selected'; ?>>Active</option>
-                            <option value="paused" <?php if($status_filter == 'paused') echo 'selected'; ?>>Paused</option>
-                            <option value="completed" <?php if($status_filter == 'completed') echo 'selected'; ?>>Completed</option>
+                        <input type="text" name="search" class="form-control form-control-lg shadow-sm border-0 rounded-pill ps-5 me-2" placeholder="Search reels..." value="<?php echo htmlspecialchars($search); ?>" style="min-width: 200px;">
+                        <select name="platform" class="form-select form-select-lg shadow-sm border-0 rounded-pill ps-4 pe-5" onchange="this.form.submit()" style="min-width: 180px;">
+                            <option value="">All Reels</option>
+                            <option value="facebook_reel" <?php if($platform_filter == 'facebook_reel') echo 'selected'; ?>>Facebook Reels</option>
+                            <option value="instagram_reel" <?php if($platform_filter == 'instagram_reel') echo 'selected'; ?>>Instagram Reels</option>
                         </select>
-                        <?php if($search || $status_filter): ?>
-                            <a href="followers_list.php" class="btn btn-light btn-lg rounded-circle shadow-sm ms-2 d-flex align-items-center justify-content-center text-danger" style="width: 48px; height: 48px;" title="Clear Filters"><i class="bi bi-x-lg"></i></a>
+                        <?php if($search || $platform_filter): ?>
+                            <a href="reels_list.php" class="btn btn-light btn-lg rounded-circle shadow-sm ms-2 d-flex align-items-center justify-content-center text-danger" style="width: 48px; height: 48px;" title="Clear Filters"><i class="bi bi-x-lg"></i></a>
                         <?php endif; ?>
                     </form>
-                    <a href="boost_follower.php" class="btn btn-success btn-lg rounded-pill shadow-sm px-4" style="background: linear-gradient(135deg, #2af598 0%, #009efd 100%); border:none;"><i class="bi bi-plus-lg me-2"></i>Add New</a>
+                    <a href="boost_reel.php" class="btn btn-danger btn-lg rounded-pill shadow-sm px-4" style="background: linear-gradient(135deg, #e83e8c 0%, #d63384 100%); border:none;"><i class="bi bi-plus-lg me-2"></i>Add Reel</a>
                 </div>
             </div>
 
             <div class="row g-4">
-                <?php if(empty($pages)): ?>
-                    <div class="col-12 text-center py-5 text-muted">No follower campaigns found matching your criteria.</div>
-                <?php else: ?>
-                    <?php foreach($pages as $name=>$page): 
-                        $follow = $clicks[$name]['follow'] ?? 0;
-                        $share  = $clicks[$name]['share'] ?? 0;
-                        $total_clicks = $follow + $share;
-                        $target = isset($page['target_clicks']) ? (int)$page['target_clicks'] : 0;
-                        $daily_limit = isset($page['daily_limit']) ? (int)$page['daily_limit'] : 0;
-                        $progress = ($target > 0) ? min(100, round(($total_clicks / $target) * 100)) : 0;
-                        $status = $page['status'] ?? 'active';
+                <?php if($videos && $videos->num_rows > 0): ?>
+                    <?php while($video = $videos->fetch_assoc()): 
+                        $vid = $video['id'];
+                        $total_views = $views_data[$vid]['total'] ?? 0;
+                        $today_views = $views_data[$vid]['today'] ?? 0;
+                        $target = $video['target_views'];
+                        $daily_limit = $video['daily_limit'];
+                        
+                        $progress = ($target > 0) ? min(100, round(($total_views / $target) * 100)) : 0;
+                        $daily_progress = ($daily_limit > 0) ? min(100, round(($today_views / $daily_limit) * 100)) : 0;
+                        
+                        $status = $video['status'];
+                        
+                        $platform = $video['platform'] ?? 'facebook_reel';
+                        $icon = 'bi-camera-reels-fill';
+                        if ($platform === 'instagram_reel') $icon = 'bi-instagram';
                     ?>
                     <div class="col-md-4">
                         <div class="card border-0 shadow-lg rounded-4 h-100 overflow-hidden">
-                            <div class="card-header text-white p-3" style="background: linear-gradient(135deg, #2af598 0%, #009efd 100%); border:none;">
+                            <div class="card-header text-white p-3" style="background: linear-gradient(135deg, #e83e8c 0%, #d63384 100%); border:none;">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0 text-truncate" style="max-width: 70%;" title="<?php echo htmlspecialchars($name); ?>"><i class="bi bi-facebook me-2"></i><?php echo htmlspecialchars($name); ?></h5>
-                                    <span class="badge bg-white text-primary shadow-sm"><?php echo ucfirst($status); ?></span>
+                                    <h5 class="mb-0 text-truncate" style="max-width: 70%;" title="<?php echo htmlspecialchars($video['title']); ?>"><i class="bi <?php echo $icon; ?> me-2"></i><?php echo htmlspecialchars($video['title']); ?></h5>
+                                    <span class="badge bg-white text-danger shadow-sm"><?php echo ucfirst($status); ?></span>
                                 </div>
                             </div>
                             <div class="card-body p-4">
-                                <!-- Progress -->
+                                <!-- Progress Bars -->
                                 <div class="mb-4">
                                     <div class="d-flex justify-content-between small fw-bold text-muted mb-1">
-                                        <span><i class="bi bi-people-fill me-1"></i>Followers Gained</span>
-                                        <span><?php echo number_format($follow); ?> <?php if($target > 0) echo '/ ' . number_format($target); ?></span>
+                                        <span><i class="bi bi-eye-fill me-1"></i>Total Views</span>
+                                        <span><?php echo number_format($total_views); ?> / <?php echo number_format($target); ?></span>
                                     </div>
-                                    <?php if($target > 0): ?>
                                     <div class="progress rounded-pill" style="height: 10px; background-color: #e9ecef;">
-                                        <div class="progress-bar" role="progressbar" style="width: <?php echo $progress; ?>%; background: linear-gradient(90deg, #2af598, #009efd);" aria-valuenow="<?php echo $progress; ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                                        <div class="progress-bar" role="progressbar" style="width: <?php echo $progress; ?>%; background: linear-gradient(90deg, #e83e8c, #d63384);" aria-valuenow="<?php echo $progress; ?>" aria-valuemin="0" aria-valuemax="100"></div>
                                     </div>
-                                    <?php else: ?>
-                                    <div class="progress rounded-pill" style="height: 10px; background-color: #e9ecef;">
-                                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%; background: linear-gradient(90deg, #2af598, #009efd);"></div>
-                                    </div>
-                                    <?php endif; ?>
                                 </div>
 
+                                <?php if($daily_limit > 0): ?>
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between small fw-bold text-muted mb-1">
+                                        <span><i class="bi bi-speedometer2 me-1"></i>Daily Limit</span>
+                                        <span><?php echo number_format($today_views); ?> / <?php echo number_format($daily_limit); ?></span>
+                                    </div>
+                                    <div class="progress rounded-pill" style="height: 10px; background-color: #e9ecef;">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: <?php echo $daily_progress; ?>%;" aria-valuenow="<?php echo $daily_progress; ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+
                                 <form method="POST" class="mt-auto">
-                                    <input type="hidden" name="id" value="<?php echo $page['id']; ?>">
+                                    <input type="hidden" name="id" value="<?php echo $video['id']; ?>">
                                     
                                     <div class="mb-3">
                                         <label class="form-label small text-muted fw-bold text-uppercase">Settings</label>
                                         <div class="input-group mb-2">
-                                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-link-45deg text-muted"></i></span>
-                                            <input type="text" name="fb_link" class="form-control bg-light border-start-0" value="<?php echo htmlspecialchars($page['fb_link']); ?>" required placeholder="URL">
-                                            <a href="<?php echo htmlspecialchars($page['fb_link']); ?>" target="_blank" class="btn btn-light border-start-0 border"><i class="bi bi-box-arrow-up-right text-muted"></i></a>
-                                        </div>
-                                        <div class="row g-2 mb-2">
-                                            <div class="col-6">
-                                                <div class="input-group">
-                                                    <span class="input-group-text bg-light border-end-0 px-2"><i class="bi bi-bullseye text-muted"></i></span>
-                                                    <input type="number" name="target_clicks" class="form-control bg-light border-start-0 px-2" value="<?php echo $target; ?>" placeholder="Target">
-                                                </div>
-                                            </div>
-                                            <div class="col-6">
-                                                <div class="input-group">
-                                                    <span class="input-group-text bg-light border-end-0 px-2"><i class="bi bi-speedometer2 text-muted"></i></span>
-                                                    <input type="number" name="daily_limit" class="form-control bg-light border-start-0 px-2" value="<?php echo $daily_limit; ?>" placeholder="Limit">
-                                                </div>
-                                            </div>
+                                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-speedometer2 text-muted"></i></span>
+                                            <input type="number" name="daily_limit" class="form-control bg-light border-start-0" value="<?php echo $daily_limit; ?>" placeholder="Daily Limit">
                                         </div>
                                         <div class="input-group">
                                             <span class="input-group-text bg-light border-end-0"><i class="bi bi-toggle-on text-muted"></i></span>
                                             <select name="status" class="form-select bg-light border-start-0">
                                                 <option value="active" <?php echo ($status=='active')?'selected':''; ?>>Active</option>
-                                                <option value="completed" <?php echo ($status=='completed')?'selected':''; ?>>Completed</option>
                                                 <option value="paused" <?php echo ($status=='paused')?'selected':''; ?>>Paused</option>
+                                                <option value="completed" <?php echo ($status=='completed')?'selected':''; ?>>Completed</option>
                                             </select>
                                         </div>
                                     </div>
 
                                     <div class="d-grid gap-2">
-                                        <button type="submit" name="update_link" class="btn btn-primary shadow-sm" style="background: linear-gradient(135deg, #2af598 0%, #009efd 100%); border:none;"><i class="bi bi-save me-2"></i>Update</button>
-                                        <button type="submit" name="delete_page" class="btn btn-light text-danger shadow-sm" onclick="return confirm('Are you sure?');"><i class="bi bi-trash me-2"></i>Delete</button>
+                                        <button type="submit" name="update_video" class="btn btn-primary shadow-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border:none;"><i class="bi bi-save me-2"></i>Update</button>
+                                        <button type="submit" name="delete_video" class="btn btn-light text-danger shadow-sm" onclick="return confirm('Delete this reel?');"><i class="bi bi-trash me-2"></i>Delete</button>
                                     </div>
                                 </form>
                             </div>
                         </div>
                     </div>
-                    <?php endforeach; ?>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <div class="col-12 text-center py-5 text-muted">No reels found.</div>
                 <?php endif; ?>
             </div>
         </div>
@@ -240,6 +240,7 @@ document.getElementById('page-content-wrapper').addEventListener('click', functi
 document.getElementById('sidebarClose').addEventListener('click', function(e) { e.preventDefault(); document.getElementById('wrapper').classList.remove('toggled'); });
 const toggle = document.getElementById('darkModeToggle'); const body = document.body; if(localStorage.getItem('darkMode') === 'enabled'){ body.classList.add('dark-mode'); toggle.textContent = '☀️'; } toggle.addEventListener('click', () => { body.classList.toggle('dark-mode'); localStorage.setItem('darkMode', body.classList.contains('dark-mode') ? 'enabled' : 'disabled'); toggle.textContent = body.classList.contains('dark-mode') ? '☀️' : '🌙'; });
 <?php if($message): ?>const toastEl = document.getElementById('liveToast'); const toast = new bootstrap.Toast(toastEl); toast.show();<?php endif; ?>
+function updateTargetInput(select) { const input = document.getElementById('target_input'); const wrapper = document.getElementById('custom_amount_wrapper'); if(select.value === 'custom') { wrapper.style.maxHeight = '100px'; wrapper.style.opacity = '1'; input.value = ''; input.required = true; input.focus(); } else { wrapper.style.maxHeight = '0'; wrapper.style.opacity = '0'; input.value = select.value; input.required = false; } }
 </script>
 </body>
 </html>

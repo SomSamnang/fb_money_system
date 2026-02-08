@@ -299,13 +299,24 @@ body.dark-mode #page-loader { background: #121212; }
         </nav>
 
         <div class="container-fluid px-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5">
+                <div>
+                    <h2 class="fw-bold text-dark mb-1">👤 Admin Profile</h2>
+                    <p class="text-muted mb-0">Manage your account details and security.</p>
+                </div>
+            </div>
             <div class="row">
                 <div class="col-md-6">
-                    <div class="card p-4">
-                        <h4 class="mb-3">👤 Update Profile</h4>
+                    <div class="card border-0 shadow-lg rounded-4 overflow-hidden h-100 mb-4">
+                        <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #36b9cc 0%, #258391 100%); border:none;">
+                            <h5 class="mb-0 fw-bold"><i class="bi bi-person-lines-fill me-2"></i>Update Profile</h5>
+                        </div>
+                        <div class="card-body p-4">
                         <form method="POST" enctype="multipart/form-data">
                             <div class="mb-3 text-center">
-                                <img src="<?php echo !empty($user['profile_pic']) ? 'uploads/'.$user['profile_pic'] : 'https://via.placeholder.com/150'; ?>" class="rounded-circle mb-2" width="100" height="100" style="object-fit:cover;">
+                                <div class="position-relative d-inline-block">
+                                    <img src="<?php echo !empty($user['profile_pic']) ? 'uploads/'.$user['profile_pic'] : 'https://via.placeholder.com/150'; ?>" class="rounded-circle mb-3 shadow" width="120" height="120" style="object-fit:cover; border: 4px solid #fff;">
+                                </div>
                                 <input type="file" class="form-control" name="profile_pic">
                                 <input type="hidden" name="cropped_image" id="cropped_image">
                                 <?php if(!empty($user['profile_pic'])): ?>
@@ -313,45 +324,54 @@ body.dark-mode #page-loader { background: #121212; }
                                 <?php endif; ?>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Username</label>
+                                <label class="form-label fw-bold small text-muted">Username</label>
                                 <input type="text" class="form-control" value="<?php echo htmlspecialchars($user['username'] ?? ''); ?>" disabled>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Email Address</label>
+                                <label class="form-label fw-bold small text-muted">Email Address</label>
                                 <input type="email" class="form-control" name="email" value="<?php echo htmlspecialchars($user['email'] ?? ''); ?>" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">About Me (Bio)</label>
+                                <label class="form-label fw-bold small text-muted">About Me (Bio)</label>
                                 <textarea class="form-control" name="bio" rows="3" placeholder="Tell us a little about yourself..."><?php echo htmlspecialchars($user['bio'] ?? ''); ?></textarea>
                             </div>
-                            <button type="submit" name="update_profile" class="btn btn-primary">Update Profile</button>
+                            <button type="submit" name="update_profile" class="btn btn-info text-white w-100 shadow-sm fw-bold">Update Profile</button>
                         </form>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="card p-4">
-                        <h4 class="mb-3">🔒 Change Password</h4>
+                    <div class="card border-0 shadow-lg rounded-4 overflow-hidden h-100 mb-4">
+                        <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%); border:none;">
+                            <h5 class="mb-0 fw-bold"><i class="bi bi-shield-lock-fill me-2"></i>Change Password</h5>
+                        </div>
+                        <div class="card-body p-4">
                         <form method="POST">
                             <div class="mb-3">
-                                <label class="form-label">New Password</label>
+                                <label class="form-label fw-bold small text-muted">New Password</label>
                                 <input type="password" class="form-control" name="new_password" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Confirm Password</label>
+                                <label class="form-label fw-bold small text-muted">Confirm Password</label>
                                 <input type="password" class="form-control" name="confirm_password" required>
                             </div>
-                            <button type="submit" name="update_password" class="btn btn-danger">Change Password</button>
+                            <button type="submit" name="update_password" class="btn btn-warning text-dark w-100 shadow-sm fw-bold">Change Password</button>
                         </form>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="row mt-4">
                 <div class="col-12">
-                    <div class="card p-4 border-danger">
-                        <h4 class="text-danger mb-3">⚠️ Danger Zone</h4>
-                        <p>Once you delete your account, there is no going back. Please be certain.</p>
-                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete Account</button>
+                    <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                        <div class="card-header bg-danger text-white p-4 border-0" style="background: linear-gradient(135deg, #e74a3b 0%, #c0392b 100%);">
+                            <h5 class="mb-0 fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Danger Zone</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <p class="text-muted">Once you delete your account, there is no going back. Please be certain.</p>
+                            <button type="button" class="btn btn-outline-danger fw-bold" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete Account</button>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -108,8 +108,17 @@ body.dark-mode .navbar { background: #1e1e1e !important; color: #e0e0e0; }
         </nav>
 
         <div class="container-fluid px-4">
-            <div class="card p-4">
-                <h4>❓ Help Center</h4>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5">
+                <div>
+                    <h2 class="fw-bold text-dark mb-1">❓ Help & Support</h2>
+                    <p class="text-muted mb-0">Guides, FAQs, and support contact.</p>
+                </div>
+            </div>
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5">
+                <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #36b9cc 0%, #258391 100%); border:none;">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-info-circle-fill me-2"></i>Help Center</h5>
+                </div>
+                <div class="card-body p-4">
                 <p>Welcome to the FB Money System help center. Here you can find guides and support.</p>
                 <ul>
                     <li><strong>Dashboard:</strong> Overview of your system stats.</li>
@@ -120,7 +129,7 @@ body.dark-mode .navbar { background: #1e1e1e !important; color: #e0e0e0; }
                 <p>Contact support at: <a href="mailto:samnang@gamil.com">samnang@gamil.com</a></p>
                 
                 <hr>
-                <h5 class="mt-4">🙋 Frequently Asked Questions</h5>
+                <h5 class="mt-4 mb-3 fw-bold text-secondary">🙋 Frequently Asked Questions</h5>
                 <div class="accordion mb-4" id="faqAccordion">
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="headingOne">
@@ -160,21 +169,22 @@ body.dark-mode .navbar { background: #1e1e1e !important; color: #e0e0e0; }
                     </div>
                 </div>
 
-                <h5 class="mt-4">� Contact Support Form</h5>
+                <h5 class="mt-4 mb-3 fw-bold text-secondary">📨 Contact Support Form</h5>
                 <?php if($message): ?>
                     <div class="alert <?php echo $msg_type; ?>"><?php echo $message; ?></div>
                 <?php endif; ?>
                 <form method="POST">
                     <div class="mb-3">
-                        <label class="form-label">Subject</label>
+                        <label class="form-label fw-bold small text-muted">Subject</label>
                         <input type="text" name="subject" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Message</label>
+                        <label class="form-label fw-bold small text-muted">Message</label>
                         <textarea name="message" class="form-control" rows="4" required></textarea>
                     </div>
-                    <button type="submit" name="send_support" class="btn btn-primary">Send Message</button>
+                    <button type="submit" name="send_support" class="btn btn-primary shadow-sm px-4 fw-bold"><i class="bi bi-send-fill me-2"></i>Send Message</button>
                 </form>
+                </div>
             </div>
         </div>
     </div>

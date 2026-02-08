@@ -19,8 +19,8 @@ $user_role = $u_row['role'] ?? 'editor';
 $message = "";
 $toast_class = "";
 
-// Handle update link
-if(isset($_POST['update_link'])){
+// Handle update page
+if(isset($_POST['update_page'])){
     $id = (int)$_POST['id'];
     $new_link = $_POST['fb_link'];
     $target = (int)$_POST['target_clicks'];
@@ -30,8 +30,8 @@ if(isset($_POST['update_link'])){
     $stmt->bind_param("siisi",$new_link,$target,$daily_limit,$status,$id);
     $stmt->execute();
     $stmt->close();
-    logAction($conn, $_SESSION['admin'], 'Update Follower Page', "Updated page ID: $id");
-    $message = "Campaign updated successfully!";
+    logAction($conn, $_SESSION['admin'], 'Update Page', "Updated page ID: $id");
+    $message = "Page updated successfully!";
     $toast_class = "bg-success";
 }
 
@@ -42,9 +42,24 @@ if(isset($_POST['delete_page'])){
     $stmt->bind_param("i",$id);
     $stmt->execute();
     $stmt->close();
-    logAction($conn, $_SESSION['admin'], 'Delete Follower Page', "Deleted page ID: $id");
-    $message = "Campaign deleted successfully!";
+    logAction($conn, $_SESSION['admin'], 'Delete Page', "Deleted page ID: $id");
+    $message = "Page deleted successfully!";
     $toast_class = "bg-danger";
+}
+
+// Handle bulk delete pages
+if(isset($_POST['bulk_delete_pages'])){
+    if(!empty($_POST['page_ids'])) {
+        $ids_raw = explode(',', $_POST['page_ids']);
+        $ids = array_map('intval', $ids_raw);
+        if(!empty($ids)) {
+            $ids_str = implode(',', $ids);
+            $conn->query("DELETE FROM pages WHERE id IN ($ids_str)");
+            logAction($conn, $_SESSION['admin'], 'Bulk Delete Pages', "Deleted page IDs: $ids_str");
+            $message = "Selected pages deleted successfully!";
+            $toast_class = "bg-danger";
+        }
+    }
 }
 
 // Filter Logic
@@ -55,8 +70,8 @@ if (!in_array($status_filter, $allowed_statuses)) {
     $status_filter = '';
 }
 
-// Fetch Follower Pages
-$sql = "SELECT * FROM pages WHERE type='follower'";
+// Fetch Pages
+$sql = "SELECT * FROM pages WHERE type='page'";
 if ($status_filter) {
     $sql .= " AND status = '" . $conn->real_escape_string($status_filter) . "'";
 }
@@ -74,7 +89,7 @@ if ($pages_result) {
 }
 
 // Fetch stats
-$sql_stats = "SELECT page,type,COUNT(*) as total FROM clicks GROUP BY page,type";
+$sql_stats = "SELECT page,type,COUNT(*) as total FROM clicks WHERE type='page' GROUP BY page,type";
 $stats_result = $conn->query($sql_stats);
 $clicks = [];
 if ($stats_result) {
@@ -88,7 +103,7 @@ if ($stats_result) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manage Followers - FB Money System</title>
+<title>Manage Pages - FB Money System</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <style>
@@ -117,15 +132,15 @@ body.dark-mode .form-control, body.dark-mode .form-select { background: #2d2d2d;
         <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom mb-4">
             <div class="container-fluid">
                 <button class="btn btn-primary" id="sidebarToggle">☰ Menu</button>
-                <span class="navbar-text ms-auto fw-bold text-primary">Manage Followers</span>
+                <span class="navbar-text ms-auto fw-bold text-primary">Manage Pages</span>
                 <button class="btn btn-sm btn-outline-secondary ms-3" id="darkModeToggle">🌙</button>
             </div>
         </nav>
         <div class="container-fluid px-4">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5">
                 <div>
-                    <h2 class="fw-bold text-dark mb-1">👥 Manage Followers</h2>
-                    <p class="text-muted mb-0">Track and boost your Facebook page followers.</p>
+                    <h2 class="fw-bold text-dark mb-1">📄 Manage Pages</h2>
+                    <p class="text-muted mb-0">Track and boost your Facebook pages.</p>
                 </div>
                 <div class="d-flex gap-3 mt-3 mt-md-0">
                     <form method="GET" class="d-flex align-items-center position-relative">
@@ -138,16 +153,29 @@ body.dark-mode .form-control, body.dark-mode .form-select { background: #2d2d2d;
                             <option value="completed" <?php if($status_filter == 'completed') echo 'selected'; ?>>Completed</option>
                         </select>
                         <?php if($search || $status_filter): ?>
-                            <a href="followers_list.php" class="btn btn-light btn-lg rounded-circle shadow-sm ms-2 d-flex align-items-center justify-content-center text-danger" style="width: 48px; height: 48px;" title="Clear Filters"><i class="bi bi-x-lg"></i></a>
+                            <a href="pages_list.php" class="btn btn-light btn-lg rounded-circle shadow-sm ms-2 d-flex align-items-center justify-content-center text-danger" style="width: 48px; height: 48px;" title="Clear Filters"><i class="bi bi-x-lg"></i></a>
                         <?php endif; ?>
                     </form>
-                    <a href="boost_follower.php" class="btn btn-success btn-lg rounded-pill shadow-sm px-4" style="background: linear-gradient(135deg, #2af598 0%, #009efd 100%); border:none;"><i class="bi bi-plus-lg me-2"></i>Add New</a>
+                    <a href="boost_page.php" class="btn btn-primary btn-lg rounded-pill shadow-sm px-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border:none;"><i class="bi bi-plus-lg me-2"></i>Add New</a>
                 </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="selectAllPages">
+                    <label class="form-check-label" for="selectAllPages">Select All</label>
+                </div>
+                <form method="POST" id="bulkDeleteForm" onsubmit="return confirm('Are you sure you want to delete the selected pages?');">
+                    <input type="hidden" name="page_ids" id="bulkDeleteInput">
+                    <button type="submit" name="bulk_delete_pages" class="btn btn-danger btn-sm rounded-pill shadow-sm" id="bulkDeleteBtn" disabled>
+                        <i class="bi bi-trash"></i> Delete Selected
+                    </button>
+                </form>
             </div>
 
             <div class="row g-4">
                 <?php if(empty($pages)): ?>
-                    <div class="col-12 text-center py-5 text-muted">No follower campaigns found matching your criteria.</div>
+                    <div class="col-12 text-center py-5 text-muted">No pages found matching your criteria.</div>
                 <?php else: ?>
                     <?php foreach($pages as $name=>$page): 
                         $follow = $clicks[$name]['follow'] ?? 0;
@@ -160,9 +188,12 @@ body.dark-mode .form-control, body.dark-mode .form-select { background: #2d2d2d;
                     ?>
                     <div class="col-md-4">
                         <div class="card border-0 shadow-lg rounded-4 h-100 overflow-hidden">
-                            <div class="card-header text-white p-3" style="background: linear-gradient(135deg, #2af598 0%, #009efd 100%); border:none;">
+                            <div class="card-header text-white p-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border:none;">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0 text-truncate" style="max-width: 70%;" title="<?php echo htmlspecialchars($name); ?>"><i class="bi bi-facebook me-2"></i><?php echo htmlspecialchars($name); ?></h5>
+                                    <div class="d-flex align-items-center">
+                                        <input class="form-check-input page-checkbox me-2" type="checkbox" value="<?php echo $page['id']; ?>">
+                                        <h5 class="mb-0 text-truncate" style="max-width: 150px;" title="<?php echo htmlspecialchars($name); ?>"><i class="bi bi-facebook me-2"></i><?php echo htmlspecialchars($name); ?></h5>
+                                    </div>
                                     <span class="badge bg-white text-primary shadow-sm"><?php echo ucfirst($status); ?></span>
                                 </div>
                             </div>
@@ -170,16 +201,16 @@ body.dark-mode .form-control, body.dark-mode .form-select { background: #2d2d2d;
                                 <!-- Progress -->
                                 <div class="mb-4">
                                     <div class="d-flex justify-content-between small fw-bold text-muted mb-1">
-                                        <span><i class="bi bi-people-fill me-1"></i>Followers Gained</span>
-                                        <span><?php echo number_format($follow); ?> <?php if($target > 0) echo '/ ' . number_format($target); ?></span>
+                                        <span><i class="bi bi-hand-thumbs-up-fill me-1"></i>Clicks</span>
+                                        <span><?php echo number_format($total_clicks); ?> <?php if($target > 0) echo '/ ' . number_format($target); ?></span>
                                     </div>
                                     <?php if($target > 0): ?>
                                     <div class="progress rounded-pill" style="height: 10px; background-color: #e9ecef;">
-                                        <div class="progress-bar" role="progressbar" style="width: <?php echo $progress; ?>%; background: linear-gradient(90deg, #2af598, #009efd);" aria-valuenow="<?php echo $progress; ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                                        <div class="progress-bar" role="progressbar" style="width: <?php echo $progress; ?>%; background: linear-gradient(90deg, #667eea, #764ba2);" aria-valuenow="<?php echo $progress; ?>" aria-valuemin="0" aria-valuemax="100"></div>
                                     </div>
                                     <?php else: ?>
                                     <div class="progress rounded-pill" style="height: 10px; background-color: #e9ecef;">
-                                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%; background: linear-gradient(90deg, #2af598, #009efd);"></div>
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%; background: linear-gradient(90deg, #667eea, #764ba2);"></div>
                                     </div>
                                     <?php endif; ?>
                                 </div>
@@ -219,7 +250,7 @@ body.dark-mode .form-control, body.dark-mode .form-select { background: #2d2d2d;
                                     </div>
 
                                     <div class="d-grid gap-2">
-                                        <button type="submit" name="update_link" class="btn btn-primary shadow-sm" style="background: linear-gradient(135deg, #2af598 0%, #009efd 100%); border:none;"><i class="bi bi-save me-2"></i>Update</button>
+                                        <button type="submit" name="update_page" class="btn btn-primary shadow-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border:none;"><i class="bi bi-save me-2"></i>Update</button>
                                         <button type="submit" name="delete_page" class="btn btn-light text-danger shadow-sm" onclick="return confirm('Are you sure?');"><i class="bi bi-trash me-2"></i>Delete</button>
                                     </div>
                                 </form>
@@ -240,6 +271,27 @@ document.getElementById('page-content-wrapper').addEventListener('click', functi
 document.getElementById('sidebarClose').addEventListener('click', function(e) { e.preventDefault(); document.getElementById('wrapper').classList.remove('toggled'); });
 const toggle = document.getElementById('darkModeToggle'); const body = document.body; if(localStorage.getItem('darkMode') === 'enabled'){ body.classList.add('dark-mode'); toggle.textContent = '☀️'; } toggle.addEventListener('click', () => { body.classList.toggle('dark-mode'); localStorage.setItem('darkMode', body.classList.contains('dark-mode') ? 'enabled' : 'disabled'); toggle.textContent = body.classList.contains('dark-mode') ? '☀️' : '🌙'; });
 <?php if($message): ?>const toastEl = document.getElementById('liveToast'); const toast = new bootstrap.Toast(toastEl); toast.show();<?php endif; ?>
+
+// Bulk Selection Logic
+const selectAll = document.getElementById('selectAllPages');
+const pageCheckboxes = document.querySelectorAll('.page-checkbox');
+const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+const bulkDeleteInput = document.getElementById('bulkDeleteInput');
+
+function updateBulkState() {
+    const checked = document.querySelectorAll('.page-checkbox:checked');
+    bulkDeleteBtn.disabled = checked.length === 0;
+    bulkDeleteInput.value = Array.from(checked).map(cb => cb.value).join(',');
+}
+
+if(selectAll) {
+    selectAll.addEventListener('change', function() {
+        pageCheckboxes.forEach(cb => cb.checked = this.checked);
+        updateBulkState();
+    });
+}
+
+pageCheckboxes.forEach(cb => cb.addEventListener('change', updateBulkState));
 </script>
 </body>
 </html>

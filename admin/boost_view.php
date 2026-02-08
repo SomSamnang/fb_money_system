@@ -104,42 +104,65 @@ body.dark-mode .form-control, body.dark-mode .form-select { background: #2d2d2d;
         <div class="container-fluid px-4">
             <div class="row justify-content-center">
                 <div class="col-lg-8">
-                    <div class="card p-5">
-                        <div class="text-center mb-4"><h1 class="h3 text-primary fw-bold"><i class="bi bi-eye-fill me-2"></i>Boost New View</h1><p class="text-muted">Add a view campaign for Facebook, YouTube, or other platforms.</p></div>
+                    <div class="card border-0 shadow-lg overflow-hidden rounded-4">
+                        <div class="card-header text-white p-4 text-center" style="background: linear-gradient(135deg, #c471f5 0%, #fa71cd 100%);">
+                            <h2 class="fw-bold mb-1"><i class="bi bi-eye-fill me-2"></i>Boost New View</h2>
+                            <p class="mb-0 opacity-75">Maximize visibility across all platforms!</p>
+                        </div>
+                        <div class="card-body p-5">
                         <form method="POST">
-                            <div class="mb-3"><label class="form-label fw-bold">Title</label><input type="text" class="form-control form-control-lg" name="title" placeholder="e.g. Watch this video" required></div>
+                            <div class="mb-3"><label class="form-label fw-bold">Title</label><div class="input-group"><span class="input-group-text"><i class="bi bi-type-h1"></i></span><input type="text" class="form-control form-control-lg" name="title" placeholder="e.g. Watch this video" required></div></div>
                             
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Platform</label>
-                                <select class="form-select form-select-lg" name="platform" required>
+                                <div class="input-group"><span class="input-group-text"><i class="bi bi-globe"></i></span><select class="form-select form-select-lg" name="platform" required>
                                     <option value="facebook">Facebook</option>
+                                    <option value="facebook_reel">Facebook Reel</option>
                                     <option value="youtube">YouTube</option>
                                     <option value="other">Other</option>
-                                </select>
+                                </select></div>
                             </div>
 
-                            <div class="mb-3"><label class="form-label fw-bold">Video/Page Link</label><input type="url" class="form-control form-control-lg" name="video_link" placeholder="https://..." required></div>
+                            <div class="mb-3"><label class="form-label fw-bold">Video/Page Link</label><div class="input-group"><span class="input-group-text"><i class="bi bi-link-45deg"></i></span><input type="url" class="form-control form-control-lg" name="video_link" placeholder="https://..." required></div></div>
                             
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Target Views</label>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text"><i class="bi bi-bullseye"></i></span>
+                                    <select class="form-select form-select-lg" id="target_select" onchange="updateTargetInput(this)">
+                                        <option value="500">500 Views</option>
+                                        <option value="1000" selected>1,000 Views</option>
+                                        <option value="5000">5,000 Views</option>
+                                        <option value="10000">10,000 Views</option>
+                                        <option value="120000">120K Views</option>
+                                        <option value="1000000">1M Views</option>
+                                        <option value="44000000">44M Views</option>
+                                        <option value="120000000">120M Views</option>
+                                        <option value="custom">Custom Amount</option>
+                                    </select>
+                                </div>
+                                <div id="custom_amount_wrapper" style="max-height: 0; opacity: 0; overflow: hidden; transition: all 0.4s ease-in-out;">
+                                    <input type="number" class="form-control form-control-lg mt-2" name="target_views" id="target_input" placeholder="Enter custom amount" value="1000" required>
+                                </div>
+                            </div>
+
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    <label class="form-label fw-bold">Target Views</label>
-                                    <input type="number" class="form-control" name="target_views" placeholder="1000" value="1000">
-                                </div>
-                                <div class="col-md-4 mb-3">
                                     <label class="form-label fw-bold">Points Reward</label>
-                                    <input type="number" class="form-control" name="points_per_view" placeholder="10" value="10">
+                                    <div class="input-group"><span class="input-group-text"><i class="bi bi-coin"></i></span><input type="number" class="form-control" name="points_per_view" placeholder="10" value="10"></div>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label fw-bold">Duration (Seconds)</label>
-                                    <input type="number" class="form-control" name="duration" placeholder="30" value="30">
+                                    <div class="input-group"><span class="input-group-text"><i class="bi bi-stopwatch"></i></span><input type="number" class="form-control" name="duration" placeholder="30" value="30"></div>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label fw-bold">Campaign Duration (Days)</label>
-                                    <input type="number" class="form-control" name="campaign_days" placeholder="1" value="1" min="1">
+                                    <div class="input-group"><span class="input-group-text"><i class="bi bi-calendar-event"></i></span><input type="number" class="form-control" name="campaign_days" placeholder="1" value="1" min="1"></div>
                                 </div>
                             </div>
-                            <div class="d-grid"><button type="submit" name="boost_view" class="btn btn-primary btn-lg fw-bold shadow-sm"><i class="bi bi-rocket-takeoff-fill me-2"></i>Start Boosting</button></div>
+                            <div class="d-grid"><button type="submit" name="boost_view" class="btn btn-primary btn-lg fw-bold shadow-sm" style="background: linear-gradient(135deg, #c471f5 0%, #fa71cd 100%); border:none;"><i class="bi bi-rocket-takeoff-fill me-2"></i>Start Boosting</button></div>
                         </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -154,6 +177,23 @@ document.getElementById('page-content-wrapper').addEventListener('click', functi
 document.getElementById('sidebarClose').addEventListener('click', function(e) { e.preventDefault(); document.getElementById('wrapper').classList.remove('toggled'); });
 const toggle = document.getElementById('darkModeToggle'); const body = document.body; if(localStorage.getItem('darkMode') === 'enabled'){ body.classList.add('dark-mode'); toggle.textContent = '☀️'; } toggle.addEventListener('click', () => { body.classList.toggle('dark-mode'); localStorage.setItem('darkMode', body.classList.contains('dark-mode') ? 'enabled' : 'disabled'); toggle.textContent = body.classList.contains('dark-mode') ? '☀️' : '🌙'; });
 <?php if($message): ?>const toastEl = document.getElementById('liveToast'); const toast = new bootstrap.Toast(toastEl); toast.show();<?php endif; ?>
+
+function updateTargetInput(select) {
+    const input = document.getElementById('target_input');
+    const wrapper = document.getElementById('custom_amount_wrapper');
+    if(select.value === 'custom') {
+        wrapper.style.maxHeight = '100px';
+        wrapper.style.opacity = '1';
+        input.value = '';
+        input.required = true;
+        input.focus();
+    } else {
+        wrapper.style.maxHeight = '0';
+        wrapper.style.opacity = '0';
+        input.value = select.value;
+        input.required = false;
+    }
+}
 </script>
 </body>
 </html>

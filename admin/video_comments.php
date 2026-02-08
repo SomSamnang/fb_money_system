@@ -28,12 +28,39 @@ if (isset($_POST['delete_comment'])) {
     logAction($conn, $_SESSION['admin'], 'Delete Video Comment', "Deleted comment ID: $id");
 }
 
+// Handle Reply Comment
+if (isset($_POST['reply_comment'])) {
+    $username = $_POST['username'];
+    $reply = trim($_POST['reply_message']);
+    $original = $_POST['original_comment'];
+    
+    if (!empty($reply)) {
+        $msg = "Admin replied to your comment: \"$original\"\n\nReply: \"$reply\"";
+        $stmt = $conn->prepare("INSERT INTO notifications (username, message) VALUES (?, ?)");
+        $stmt->bind_param("ss", $username, $msg);
+        if ($stmt->execute()) {
+            $message = "Reply sent to $username successfully.";
+            $toast_class = "bg-success";
+            logAction($conn, $_SESSION['admin'], 'Reply Comment', "Replied to $username");
+        } else {
+            $message = "Error sending reply.";
+            $toast_class = "bg-danger";
+        }
+        $stmt->close();
+    }
+}
+
 // Fetch Comments
+$search = $_GET['search'] ?? '';
 $sql = "SELECT c.id, c.comment, c.created_at, u.username, v.title 
         FROM video_comments c 
         JOIN users u ON c.user_id = u.id 
-        JOIN videos v ON c.video_id = v.id 
-        ORDER BY c.created_at DESC";
+        JOIN videos v ON c.video_id = v.id";
+
+if ($search) {
+    $sql .= " WHERE u.username LIKE '%" . $conn->real_escape_string($search) . "%' OR c.comment LIKE '%" . $conn->real_escape_string($search) . "%' OR v.title LIKE '%" . $conn->real_escape_string($search) . "%'";
+}
+$sql .= " ORDER BY c.created_at DESC";
 $comments = $conn->query($sql);
 ?>
 <!DOCTYPE html>
@@ -75,23 +102,40 @@ body.dark-mode .table { color: #e0e0e0; }
             </div>
         </nav>
         <div class="container-fluid px-4">
-            <div class="card p-4">
-                <h5 class="mb-3">Video Comments</h5>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead><tr><th>Date</th><th>User</th><th>Video</th><th>Comment</th><th>Action</th></tr></thead>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5">
+                <div>
+                    <h2 class="fw-bold text-dark mb-1">💬 Moderate Comments</h2>
+                    <p class="text-muted mb-0">Review and manage user comments on videos.</p>
+                </div>
+                <div class="mt-3 mt-md-0">
+                    <form method="GET" class="position-relative">
+                        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                        <input type="text" name="search" class="form-control form-control-lg ps-5 rounded-pill shadow-sm border-0" placeholder="Search comments..." value="<?php echo htmlspecialchars($search); ?>" style="min-width: 300px;">
+                        <?php if($search): ?><a href="video_comments.php" class="position-absolute top-50 end-0 translate-middle-y me-3 text-muted"><i class="bi bi-x-lg"></i></a><?php endif; ?>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5">
+                <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #36b9cc 0%, #258391 100%); border:none;">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-chat-square-quote-fill me-2"></i>Recent Comments</h5>
+                </div>
+                <div class="table-responsive p-0">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light"><tr><th class="ps-4 py-3">Date</th><th>User</th><th>Video</th><th>Comment</th><th class="text-end pe-4">Action</th></tr></thead>
                         <tbody>
                             <?php if($comments && $comments->num_rows > 0): ?>
                                 <?php while($c = $comments->fetch_assoc()): ?>
                                 <tr>
-                                    <td style="white-space:nowrap;"><?php echo date("M d, Y H:i", strtotime($c['created_at'])); ?></td>
-                                    <td><?php echo htmlspecialchars($c['username']); ?></td>
-                                    <td><?php echo htmlspecialchars($c['title']); ?></td>
-                                    <td><?php echo htmlspecialchars($c['comment']); ?></td>
-                                    <td>
-                                        <form method="POST" onsubmit="return confirm('Delete this comment?');">
+                                    <td class="ps-4 text-muted small" style="white-space:nowrap;"><?php echo date("M d, Y H:i", strtotime($c['created_at'])); ?></td>
+                                    <td class="fw-bold text-primary"><?php echo htmlspecialchars($c['username']); ?></td>
+                                    <td><span class="badge bg-secondary bg-opacity-10 text-secondary text-truncate" style="max-width: 150px;"><?php echo htmlspecialchars($c['title']); ?></span></td>
+                                    <td class="text-dark"><?php echo htmlspecialchars($c['comment']); ?></td>
+                                    <td class="text-end pe-4">
+                                        <button type="button" class="btn btn-sm btn-outline-primary border-0 me-1" onclick="openReplyModal('<?php echo htmlspecialchars($c['username']); ?>', '<?php echo htmlspecialchars($c['comment'], ENT_QUOTES); ?>')" title="Reply"><i class="bi bi-reply-fill"></i></button>
+                                        <form method="POST" onsubmit="return confirm('Delete this comment?');" class="d-inline">
                                             <input type="hidden" name="comment_id" value="<?php echo $c['id']; ?>">
-                                            <button type="submit" name="delete_comment" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
+                                            <button type="submit" name="delete_comment" class="btn btn-sm btn-outline-danger border-0" title="Delete"><i class="bi bi-trash-fill"></i></button>
                                         </form>
                                     </td>
                                 </tr>
@@ -106,6 +150,37 @@ body.dark-mode .table { color: #e0e0e0; }
         </div>
     </div>
 </div>
+
+<!-- Reply Modal -->
+<div class="modal fade" id="replyModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #36b9cc 0%, #258391 100%);">
+        <h5 class="modal-title fw-bold"><i class="bi bi-reply-fill me-2"></i>Reply to User</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST">
+          <div class="modal-body p-4">
+            <input type="hidden" name="username" id="replyUserField">
+            <input type="hidden" name="original_comment" id="replyOriginalField">
+            <div class="mb-3">
+                <label class="form-label text-muted small fw-bold text-uppercase">Replying to <span id="replyUsername" class="text-primary"></span></label>
+                <div class="p-3 bg-light border rounded small fst-italic text-muted" id="replyOriginalDisplay"></div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label text-muted small fw-bold text-uppercase">Your Message</label>
+                <textarea name="reply_message" class="form-control" rows="4" required placeholder="Type your reply here..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer border-0 px-4 pb-4">
+            <button type="button" class="btn btn-light text-muted" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" name="reply_comment" class="btn btn-info text-white px-4 shadow-sm"><i class="bi bi-send-fill me-1"></i> Send Reply</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <div class="toast-container position-fixed bottom-0 end-0 p-3"><div id="liveToast" class="toast align-items-center text-white <?php echo $toast_class; ?> border-0" role="alert" aria-live="assertive" aria-atomic="true"><div class="d-flex"><div class="toast-body"><?php echo $message; ?></div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div></div></div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -114,6 +189,14 @@ document.getElementById('page-content-wrapper').addEventListener('click', functi
 document.getElementById('sidebarClose').addEventListener('click', function(e) { e.preventDefault(); document.getElementById('wrapper').classList.remove('toggled'); });
 const toggle = document.getElementById('darkModeToggle'); const body = document.body; if(localStorage.getItem('darkMode') === 'enabled'){ body.classList.add('dark-mode'); toggle.textContent = '☀️'; } toggle.addEventListener('click', () => { body.classList.toggle('dark-mode'); localStorage.setItem('darkMode', body.classList.contains('dark-mode') ? 'enabled' : 'disabled'); toggle.textContent = body.classList.contains('dark-mode') ? '☀️' : '🌙'; });
 <?php if($message): ?>const toastEl = document.getElementById('liveToast'); const toast = new bootstrap.Toast(toastEl); toast.show();<?php endif; ?>
+
+function openReplyModal(username, comment) {
+    document.getElementById('replyUsername').textContent = username;
+    document.getElementById('replyUserField').value = username;
+    document.getElementById('replyOriginalField').value = comment;
+    document.getElementById('replyOriginalDisplay').textContent = comment;
+    new bootstrap.Modal(document.getElementById('replyModal')).show();
+}
 </script>
 </body>
 </html>

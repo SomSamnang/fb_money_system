@@ -165,7 +165,6 @@ body { background:#f8f9fc; font-family: 'Segoe UI', sans-serif; overflow-x: hidd
 #sidebar-wrapper .list-group-item:hover { background: rgba(255,255,255,0.2); color: #fff; }
 #sidebar-wrapper .list-group-item.active { background: rgba(255,255,255,0.3); color: #fff; font-weight: bold; }
 #page-content-wrapper { width: 100%; display: flex; flex-direction: column; min-height: 100vh; }
-.card { border:none; border-radius:15px; box-shadow:0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15); margin-bottom: 20px; }
 .card h5 { font-weight:600; }
 .message { margin:15px 0; padding:10px; background:#d4edda; color:#155724; border-radius:8px; }
 .navbar { box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15); background: #fff !important; position: sticky; top: 0; z-index: 100; }
@@ -210,9 +209,7 @@ body.dark-mode #page-loader { background: #121212; }
         <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom mb-4">
             <div class="container-fluid">
                 <button class="btn btn-primary" id="sidebarToggle">☰ Menu</button>
-                <span class="navbar-text ms-auto fw-bold text-primary">
-                    Admin Dashboard
-                </span>
+                <span class="navbar-text ms-auto fw-bold text-primary">🚀 Dashboard Overview</span>
                 <button class="btn btn-sm btn-outline-secondary ms-3" id="darkModeToggle">🌙</button>
             </div>
         </nav>
@@ -220,62 +217,94 @@ body.dark-mode #page-loader { background: #121212; }
         <div class="container-fluid px-4">
 
 <!-- Overview Cards -->
-<div class="row g-4 mb-4">
+<div class="row g-4 mb-5">
     <div class="col-md-4">
-        <div class="card bg-primary text-white h-100">
-            <div class="card-body">
-                <h5 class="card-title">👥 Total Users</h5>
-                <h2 class="card-text"><?php echo $total_users; ?></h2>
+        <div class="card border-0 shadow-lg h-100 overflow-hidden text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="card-body position-relative p-4">
+                <div class="d-flex justify-content-between align-items-center z-1 position-relative">
+                    <div>
+                        <h6 class="text-uppercase mb-1 opacity-75 fw-bold">Total Users</h6>
+                        <h2 class="display-5 fw-bold mb-0"><?php echo number_format($total_users); ?></h2>
+                    </div>
+                    <div class="p-3 bg-white bg-opacity-25 rounded-circle">
+                        <i class="bi bi-people-fill fs-1"></i>
+                    </div>
+                </div>
+                <i class="bi bi-people-fill position-absolute bottom-0 end-0 display-1 opacity-10" style="transform: translate(20%, 20%);"></i>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card bg-success text-white h-100">
-            <div class="card-body">
-                <h5 class="card-title">📄 Active Pages</h5>
-                <h2 class="card-text"><?php echo count($pages); ?></h2>
+        <div class="card border-0 shadow-lg h-100 overflow-hidden text-white" style="background: linear-gradient(135deg, #2af598 0%, #009efd 100%);">
+            <div class="card-body position-relative p-4">
+                <div class="d-flex justify-content-between align-items-center z-1 position-relative">
+                    <div>
+                        <h6 class="text-uppercase mb-1 opacity-75 fw-bold">Active Pages</h6>
+                        <h2 class="display-5 fw-bold mb-0"><?php echo count($pages); ?></h2>
+                    </div>
+                    <div class="p-3 bg-white bg-opacity-25 rounded-circle">
+                        <i class="bi bi-file-earmark-text-fill fs-1"></i>
+                    </div>
+                </div>
+                <i class="bi bi-file-earmark-text-fill position-absolute bottom-0 end-0 display-1 opacity-10" style="transform: translate(20%, 20%);"></i>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card bg-warning text-dark h-100">
-            <div class="card-body">
-                <h5 class="card-title">👀 Total Visitors</h5>
-                <h2 class="card-text"><?php echo $total_visitors; ?></h2>
+        <div class="card border-0 shadow-lg h-100 overflow-hidden text-white" style="background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);">
+            <div class="card-body position-relative p-4">
+                <div class="d-flex justify-content-between align-items-center z-1 position-relative">
+                    <div>
+                        <h6 class="text-uppercase mb-1 opacity-75 fw-bold">Total Visitors</h6>
+                        <h2 class="display-5 fw-bold mb-0"><?php echo number_format($total_visitors); ?></h2>
+                    </div>
+                    <div class="p-3 bg-white bg-opacity-25 rounded-circle">
+                        <i class="bi bi-eye-fill fs-1"></i>
+                    </div>
+                </div>
+                <i class="bi bi-eye-fill position-absolute bottom-0 end-0 display-1 opacity-10" style="transform: translate(20%, 20%);"></i>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Add New Page -->
-<div class="card p-4 mb-4">
-<h4 class="mb-3">➕ Add New Page</h4>
-<form method="POST" class="row g-2">
-<div class="col-md-3">
-<input type="text" class="form-control" name="name" placeholder="Page name" required>
-</div>
-<div class="col-md-5">
-<input type="text" class="form-control" name="fb_link" placeholder="Facebook URL" required>
-</div>
-<div class="col-md-2">
-<input type="number" class="form-control" name="target_clicks" placeholder="Target" value="0">
-</div>
-<div class="col-md-2">
-<input type="submit" name="add_page" class="btn btn-success w-100" value="Add Page">
-</div>
-</form>
+<div class="card border-0 shadow-lg rounded-4 mb-5 overflow-hidden">
+    <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); border:none;">
+        <h4 class="mb-0 fw-bold"><i class="bi bi-plus-circle-fill me-2"></i>Add New Page</h4>
+    </div>
+    <div class="card-body p-4">
+        <form method="POST" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label fw-bold small text-muted">Page Name</label>
+                <div class="input-group"><span class="input-group-text bg-light"><i class="bi bi-tag"></i></span><input type="text" class="form-control" name="name" placeholder="e.g. My Page" required></div>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label fw-bold small text-muted">Facebook URL</label>
+                <div class="input-group"><span class="input-group-text bg-light"><i class="bi bi-facebook"></i></span><input type="text" class="form-control" name="fb_link" placeholder="https://..." required></div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold small text-muted">Target</label>
+                <div class="input-group"><span class="input-group-text bg-light"><i class="bi bi-bullseye"></i></span><input type="number" class="form-control" name="target_clicks" placeholder="0" value="0"></div>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" name="add_page" class="btn btn-primary w-100 fw-bold shadow-sm" style="background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); border:none;"><i class="bi bi-plus-lg me-1"></i> Add Page</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <!-- Top Performing Pages Widget -->
-<div class="card p-4 mb-4">
-    <h4 class="mb-3">🏆 Top Performing Pages</h4>
+<div class="card border-0 shadow-sm rounded-4 mb-5 p-4">
+    <h5 class="mb-4 fw-bold text-secondary"><i class="bi bi-trophy-fill me-2 text-warning"></i>Top Performing Pages</h5>
     <div class="row g-3">
         <?php if($top_pages_res && $top_pages_res->num_rows > 0): ?>
             <?php while($tp = $top_pages_res->fetch_assoc()): ?>
             <div class="col-6 col-md">
-                <div class="border rounded p-3 text-center bg-light h-100">
+                <div class="border-0 shadow-sm rounded-4 p-3 text-center bg-white h-100 position-relative overflow-hidden">
+                    <div class="position-absolute top-0 start-0 w-100 h-100 opacity-10" style="background: linear-gradient(135deg, #4e73df, #224abe);"></div>
                     <div class="fw-bold text-primary text-capitalize text-truncate" title="<?php echo htmlspecialchars($tp['page']); ?>"><?php echo htmlspecialchars($tp['page']); ?></div>
-                    <div class="h4 mb-0 mt-2"><?php echo $tp['total_clicks']; ?></div>
+                    <div class="h3 mb-0 mt-2 fw-bold"><?php echo $tp['total_clicks']; ?></div>
                     <small class="text-muted">Clicks</small>
                 </div>
             </div>
@@ -287,15 +316,16 @@ body.dark-mode #page-loader { background: #121212; }
 </div>
 
 <!-- Most Liked Videos Widget -->
-<div class="card p-4 mb-4">
-    <h4 class="mb-3">❤️ Most Liked Videos</h4>
+<div class="card border-0 shadow-sm rounded-4 mb-5 p-4">
+    <h5 class="mb-4 fw-bold text-secondary"><i class="bi bi-heart-fill me-2 text-danger"></i>Most Liked Videos</h5>
     <div class="row g-3">
         <?php if($top_videos_res && $top_videos_res->num_rows > 0): ?>
             <?php while($tv = $top_videos_res->fetch_assoc()): ?>
             <div class="col-6 col-md">
-                <div class="border rounded p-3 text-center bg-light h-100">
+                <div class="border-0 shadow-sm rounded-4 p-3 text-center bg-white h-100 position-relative overflow-hidden">
+                    <div class="position-absolute top-0 start-0 w-100 h-100 opacity-10" style="background: linear-gradient(135deg, #ff0844, #ffb199);"></div>
                     <div class="fw-bold text-danger text-truncate" title="<?php echo htmlspecialchars($tv['title']); ?>"><?php echo htmlspecialchars($tv['title']); ?></div>
-                    <div class="h4 mb-0 mt-2"><?php echo $tv['total_likes']; ?></div>
+                    <div class="h3 mb-0 mt-2 fw-bold"><?php echo $tv['total_likes']; ?></div>
                     <small class="text-muted">Likes</small>
                 </div>
             </div>
@@ -307,18 +337,18 @@ body.dark-mode #page-loader { background: #121212; }
 </div>
 
 <!-- Recent Activity Widget -->
-<div class="card p-4 mb-4">
-    <h4 class="mb-3">🕒 Recent Activity</h4>
+<div class="card border-0 shadow-sm rounded-4 mb-5 p-4">
+    <h5 class="mb-3 fw-bold text-secondary"><i class="bi bi-clock-history me-2 text-info"></i>Recent Activity</h5>
     <ul class="list-group list-group-flush">
         <?php if($recent_activity_res && $recent_activity_res->num_rows > 0): ?>
             <?php while($log = $recent_activity_res->fetch_assoc()): ?>
-            <li class="list-group-item d-flex justify-content-between align-items-center">
+            <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
                 <div>
-                    <span class="fw-bold"><?php echo htmlspecialchars($log['username']); ?></span>
-                    <span class="text-muted mx-2">&bull;</span>
+                    <span class="fw-bold text-dark"><?php echo htmlspecialchars($log['username']); ?></span>
+                    <span class="text-muted mx-2 small">&bull;</span>
                     <span><?php echo htmlspecialchars($log['action']); ?></span>
                 </div>
-                <small class="text-muted"><?php echo date("M d, Y h:i A", strtotime($log['created_at'])); ?></small>
+                <small class="text-muted bg-light px-2 py-1 rounded"><?php echo date("M d, H:i", strtotime($log['created_at'])); ?></small>
             </li>
             <?php endwhile; ?>
         <?php else: ?>
@@ -329,12 +359,13 @@ body.dark-mode #page-loader { background: #121212; }
 
 <!-- Page Cards -->
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <div class="flex-grow-1 me-3">
-        <input type="text" id="pageSearch" class="form-control" placeholder="Search pages...">
+    <div class="flex-grow-1 me-3 position-relative">
+        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+        <input type="text" id="pageSearch" class="form-control form-control-lg ps-5 rounded-pill shadow-sm border-0" placeholder="Search pages...">
     </div>
     <form method="POST" id="bulkDeleteForm" onsubmit="return confirm('Are you sure you want to delete the selected pages?');">
         <input type="hidden" name="page_ids" id="bulkDeleteInput">
-        <button type="submit" name="bulk_delete_pages" class="btn btn-danger" id="bulkDeleteBtn" disabled>
+        <button type="submit" name="bulk_delete_pages" class="btn btn-danger btn-lg rounded-pill shadow-sm" id="bulkDeleteBtn" disabled>
             <i class="bi bi-trash"></i> Delete Selected
         </button>
     </form>
@@ -353,62 +384,75 @@ body.dark-mode #page-loader { background: #121212; }
         $daily_limit = isset($page['daily_limit']) ? (int)$page['daily_limit'] : 0;
         $progress = ($target > 0) ? min(100, round(($total_clicks / $target) * 100)) : 0;
         $status = $page['status'] ?? 'active';
-        $status_badge = 'bg-secondary';
-        if ($status === 'active') $status_badge = 'bg-success';
-        elseif ($status === 'completed') $status_badge = 'bg-primary';
-        elseif ($status === 'paused') $status_badge = 'bg-warning text-dark';
     ?>
     <div class="col-md-4">
-        <div class="card text-center p-3 position-relative">
-            <div class="position-absolute top-0 start-0 m-2">
-                <input class="form-check-input page-checkbox" type="checkbox" value="<?php echo $page['id']; ?>">
+        <div class="card border-0 shadow-lg rounded-4 h-100 overflow-hidden">
+            <div class="card-header text-white p-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border:none;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <input class="form-check-input page-checkbox me-2" type="checkbox" value="<?php echo $page['id']; ?>">
+                        <h5 class="mb-0 text-truncate page-title" style="max-width: 150px;" title="<?php echo htmlspecialchars($name); ?>"><?php echo htmlspecialchars($name); ?></h5>
+                    </div>
+                    <span class="badge bg-white text-primary shadow-sm"><?php echo ucfirst($status); ?></span>
+                </div>
             </div>
-            <h5 class="text-primary text-capitalize page-title mb-1"><?php echo htmlspecialchars($name); ?></h5>
-            <div class="mb-2"><span class="badge <?php echo $status_badge; ?>"><?php echo ucfirst($status); ?></span></div>
-            <p class="mb-1">Follow: <strong><?php echo $follow; ?></strong></p>
-            <p>Share: <strong><?php echo $share; ?></strong></p>
-            
-            <?php if($target > 0): ?>
-            <div class="progress mb-2" style="height: 10px;" title="<?php echo $total_clicks . ' / ' . $target; ?>">
-                <div class="progress-bar bg-success" role="progressbar" style="width: <?php echo $progress; ?>%"></div>
+            <div class="card-body p-4">
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between small fw-bold text-muted mb-1">
+                        <span><i class="bi bi-hand-thumbs-up-fill me-1"></i>Follows: <?php echo $follow; ?></span>
+                        <span><i class="bi bi-share-fill me-1"></i>Shares: <?php echo $share; ?></span>
+                    </div>
+                    <?php if($target > 0): ?>
+                    <div class="progress rounded-pill" style="height: 10px; background-color: #e9ecef;">
+                        <div class="progress-bar" role="progressbar" style="width: <?php echo $progress; ?>%; background: linear-gradient(90deg, #667eea, #764ba2);" aria-valuenow="<?php echo $progress; ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="text-end small text-muted mt-1"><?php echo $total_clicks; ?> / <?php echo $target; ?></div>
+                    <?php else: ?>
+                    <div class="progress rounded-pill" style="height: 10px; background-color: #e9ecef;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%; background: linear-gradient(90deg, #667eea, #764ba2);"></div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+
+                <form method="POST" class="mt-auto">
+                    <input type="hidden" name="id" value="<?php echo $page['id']; ?>">
+                    
+                    <div class="mb-3">
+                        <div class="input-group mb-2">
+                            <input type="text" name="fb_link" id="link-<?php echo $page['id']; ?>" class="form-control bg-light border-end-0" value="<?php echo htmlspecialchars($page['fb_link']); ?>" required>
+                            <button type="button" class="btn btn-light border border-start-0" onclick="copyToClipboard('link-<?php echo $page['id']; ?>', this)" title="Copy"><i class="bi bi-clipboard"></i></button>
+                            <button type="button" class="btn btn-light border border-start-0" onclick="showQRCode(this.getAttribute('data-url'), this.getAttribute('data-name'))" data-url="<?php echo htmlspecialchars($page['fb_link']); ?>" data-name="<?php echo htmlspecialchars($name); ?>" title="QR"><i class="bi bi-qr-code"></i></button>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-bullseye text-muted"></i></span>
+                                    <input type="number" name="target_clicks" class="form-control bg-light border-start-0" value="<?php echo $target; ?>" placeholder="Target">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-speedometer2 text-muted"></i></span>
+                                    <input type="number" name="daily_limit" class="form-control bg-light border-start-0" value="<?php echo $daily_limit; ?>" placeholder="Limit">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-toggle-on text-muted"></i></span>
+                            <select name="status" class="form-select bg-light border-start-0">
+                                <option value="active" <?php echo ($status=='active')?'selected':''; ?>>Active</option>
+                                <option value="completed" <?php echo ($status=='completed')?'selected':''; ?>>Completed</option>
+                                <option value="paused" <?php echo ($status=='paused')?'selected':''; ?>>Paused</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" name="update_link" class="btn btn-primary shadow-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border:none;"><i class="bi bi-save me-2"></i>Update</button>
+                        <button type="submit" name="delete_page" class="btn btn-light text-danger shadow-sm" onclick="return confirm('Are you sure?');"><i class="bi bi-trash me-2"></i>Delete</button>
+                    </div>
+                </form>
             </div>
-            <small class="text-muted d-block mb-2"><?php echo $total_clicks; ?> / <?php echo $target; ?> Clicks (<?php echo $progress; ?>%)</small>
-            <?php endif; ?>
-            <form method="POST" class="mt-2">
-                <div class="input-group mb-2">
-                    <input type="text" name="fb_link" id="link-<?php echo $page['id']; ?>" class="form-control" value="<?php echo htmlspecialchars($page['fb_link']); ?>" required>
-                    <button type="button" class="btn btn-outline-secondary" onclick="copyToClipboard('link-<?php echo $page['id']; ?>', this)" title="Copy Link">
-                        <i class="bi bi-clipboard"></i>
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary" 
-                        data-url="<?php echo htmlspecialchars($page['fb_link']); ?>" 
-                        data-name="<?php echo htmlspecialchars($name); ?>" 
-                        onclick="showQRCode(this.getAttribute('data-url'), this.getAttribute('data-name'))" title="Show QR Code">
-                        <i class="bi bi-qr-code"></i>
-                    </button>
-                </div>
-                <div class="input-group mb-2">
-                    <span class="input-group-text small">Target</span>
-                    <input type="number" name="target_clicks" class="form-control" value="<?php echo $target; ?>" placeholder="0">
-                </div>
-                <div class="input-group mb-2">
-                    <span class="input-group-text small">Daily Limit</span>
-                    <input type="number" name="daily_limit" class="form-control" value="<?php echo $daily_limit; ?>" placeholder="0">
-                </div>
-                <div class="input-group mb-2">
-                    <span class="input-group-text small">Status</span>
-                    <select name="status" class="form-select">
-                        <option value="active" <?php echo ($status=='active')?'selected':''; ?>>Active</option>
-                        <option value="completed" <?php echo ($status=='completed')?'selected':''; ?>>Completed</option>
-                        <option value="paused" <?php echo ($status=='paused')?'selected':''; ?>>Paused</option>
-                    </select>
-                </div>
-                <input type="hidden" name="id" value="<?php echo $page['id']; ?>">
-                <div class="d-flex gap-2">
-                    <input type="submit" name="update_link" class="btn btn-primary w-50" value="Update">
-                    <input type="submit" name="delete_page" class="btn btn-danger w-50" value="Delete Page" onclick="return confirm('Are you sure?');">
-                </div>
-            </form>
         </div>
     </div>
     <?php endforeach; ?>
@@ -417,8 +461,8 @@ body.dark-mode #page-loader { background: #121212; }
 <!-- Stats chart -->
 <div class="row">
     <div class="col-lg-8">
-        <div class="card p-4 mb-5">
-            <h4 class="text-center mb-4">📊 Page Clicks Stats</h4>
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-5">
+            <h5 class="text-center mb-4 fw-bold text-secondary">📊 Page Clicks Stats</h5>
             
             <form method="GET" class="row g-3 justify-content-center mb-4">
                 <div class="col-auto d-flex align-items-center">

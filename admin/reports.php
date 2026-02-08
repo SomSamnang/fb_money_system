@@ -132,59 +132,71 @@ body.dark-mode .navbar { background: #1e1e1e !important; color: #e0e0e0; }
         </nav>
 
         <div class="container-fluid px-4">
-            <h4 class="mb-3">📊 Analytics Reports</h4>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5">
+                <div>
+                    <h2 class="fw-bold text-dark mb-1">📊 Analytics Reports</h2>
+                    <p class="text-muted mb-0">Deep dive into your system's performance metrics.</p>
+                </div>
+            </div>
             
             <!-- Filter -->
-            <div class="card p-3 mb-4 shadow-sm">
-                <form method="GET" class="row g-3 align-items-end">
-                    <div class="col-md-4">
-                        <label class="form-label fw-bold">Start Date</label>
-                        <input type="date" name="start_date" class="form-control" value="<?php echo htmlspecialchars($start_date); ?>">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-bold">End Date</label>
-                        <input type="date" name="end_date" class="form-control" value="<?php echo htmlspecialchars($end_date); ?>">
-                    </div>
-                    <div class="col-md-4">
-                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-filter"></i> Filter Reports</button>
-                    </div>
-                </form>
+            <div class="card border-0 shadow-lg rounded-4 mb-5 overflow-hidden">
+                <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #4e73df 0%, #224abe 100%); border:none;">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-filter-circle me-2"></i>Filter Data</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="GET" class="row g-3 align-items-end">
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold small text-muted">Start Date</label>
+                            <div class="input-group"><span class="input-group-text bg-light"><i class="bi bi-calendar-event"></i></span><input type="date" name="start_date" class="form-control" value="<?php echo htmlspecialchars($start_date); ?>"></div>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold small text-muted">End Date</label>
+                            <div class="input-group"><span class="input-group-text bg-light"><i class="bi bi-calendar-event-fill"></i></span><input type="date" name="end_date" class="form-control" value="<?php echo htmlspecialchars($end_date); ?>"></div>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm" style="background: linear-gradient(135deg, #4e73df 0%, #224abe 100%); border:none;"><i class="bi bi-funnel-fill me-2"></i>Filter</button>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             <div class="row g-4 mb-4">
                 <!-- Daily Trend -->
                 <div class="col-lg-8">
-                    <div class="card p-4 h-100 shadow-sm">
-                        <h5 class="card-title mb-4">📈 Daily Activity Trend</h5>
+                    <div class="card border-0 shadow-lg rounded-4 h-100 p-4">
+                        <h5 class="card-title mb-4 fw-bold text-secondary"><i class="bi bi-graph-up-arrow me-2 text-primary"></i>Daily Activity Trend</h5>
                         <canvas id="dailyChart" height="150"></canvas>
                     </div>
                 </div>
                 <!-- Country Stats -->
                 <div class="col-lg-4">
-                    <div class="card p-4 h-100 shadow-sm">
-                        <h5 class="card-title mb-4">🌍 Visitors by Country</h5>
+                    <div class="card border-0 shadow-lg rounded-4 h-100 p-4">
+                        <h5 class="card-title mb-4 fw-bold text-secondary"><i class="bi bi-globe-americas me-2 text-success"></i>Visitors by Country</h5>
                         <canvas id="countryChart" height="200"></canvas>
                     </div>
                 </div>
             </div>
 
             <!-- Page Performance -->
-            <div class="card p-4 mb-4 shadow-sm">
-                <h5 class="card-title mb-4">📊 Page Performance (Follow vs Share)</h5>
+            <div class="card border-0 shadow-lg rounded-4 mb-5 p-4">
+                <h5 class="card-title mb-4 fw-bold text-secondary"><i class="bi bi-bar-chart-fill me-2 text-info"></i>Page Performance (Follow vs Share)</h5>
                 <canvas id="pageChart" height="100"></canvas>
             </div>
 
             <!-- Detailed Table -->
-            <div class="card p-4 shadow-sm">
-                <h5 class="card-title mb-3">📋 Detailed Summary</h5>
+            <div class="card border-0 shadow-lg rounded-4 mb-5 overflow-hidden">
+                <div class="card-header bg-white p-4 border-bottom-0">
+                    <h5 class="card-title mb-0 fw-bold text-secondary"><i class="bi bi-table me-2 text-warning"></i>Detailed Summary</h5>
+                </div>
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover">
-                        <thead class="table-light">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
                             <tr>
-                                <th>Page Name</th>
-                                <th>Follows</th>
-                                <th>Shares</th>
-                                <th>Total Interactions</th>
+                                <th class="ps-4 py-3 text-uppercase small text-muted">Page Name</th>
+                                <th class="py-3 text-uppercase small text-muted">Follows</th>
+                                <th class="py-3 text-uppercase small text-muted">Shares</th>
+                                <th class="py-3 text-uppercase small text-muted">Total Interactions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -194,14 +206,14 @@ body.dark-mode .navbar { background: #1e1e1e !important; color: #e0e0e0; }
                                     $s = $clicks_data[$page]['share'] ?? 0;
                                 ?>
                                 <tr>
-                                    <td class="text-capitalize fw-bold"><?php echo htmlspecialchars($page); ?></td>
-                                    <td><?php echo $f; ?></td>
-                                    <td><?php echo $s; ?></td>
-                                    <td><?php echo $f + $s; ?></td>
+                                    <td class="ps-4 fw-bold text-primary text-capitalize"><?php echo htmlspecialchars($page); ?></td>
+                                    <td><span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3"><?php echo $f; ?></span></td>
+                                    <td><span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3"><?php echo $s; ?></span></td>
+                                    <td class="fw-bold"><?php echo $f + $s; ?></td>
                                 </tr>
                                 <?php endforeach; ?>
                             <?php else: ?>
-                                <tr><td colspan="4" class="text-center">No data found for this period.</td></tr>
+                                <tr><td colspan="4" class="text-center py-5 text-muted">No data found for this period.</td></tr>
                             <?php endif; ?>
                         </tbody>
                     </table>

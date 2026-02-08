@@ -259,20 +259,27 @@ body.dark-mode .navbar { background: #1e1e1e !important; color: #e0e0e0; }
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
             <?php endif; ?>
-            <h4 class="mb-3">✅ Do Done List</h4>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5">
+                <div>
+                    <h2 class="fw-bold text-dark mb-1">✅ Do Done List</h2>
+                    <p class="text-muted mb-0">Manage your tasks and productivity.</p>
+                </div>
+            </div>
             
             <!-- Add Task -->
-            <div class="card p-3 mb-4 shadow-sm">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-4">
+                <div class="card-body p-4">
                 <form method="POST" class="d-flex gap-2">
-                    <input type="text" name="task" class="form-control" placeholder="What needs to be done?" required>
-                    <select name="priority" class="form-select" style="max-width: 120px;">
+                    <input type="text" name="task" class="form-control form-control-lg bg-light border-0" placeholder="What needs to be done?" required>
+                    <select name="priority" class="form-select form-select-lg bg-light border-0" style="max-width: 140px;">
                         <option value="High">High</option>
                         <option value="Medium" selected>Medium</option>
                         <option value="Low">Low</option>
                     </select>
-                    <input type="date" name="due_date" class="form-control" style="max-width: 150px;" title="Due Date">
-                    <button type="submit" name="add_task" class="btn btn-primary">Add Task</button>
+                    <input type="date" name="due_date" class="form-control form-control-lg bg-light border-0" style="max-width: 180px;" title="Due Date">
+                    <button type="submit" name="add_task" class="btn btn-primary btn-lg shadow-sm fw-bold px-4"><i class="bi bi-plus-lg"></i></button>
                 </form>
+                </div>
             </div>
 
             <ul class="nav nav-tabs mb-3" id="viewTabs" role="tablist">
@@ -308,8 +315,8 @@ body.dark-mode .navbar { background: #1e1e1e !important; color: #e0e0e0; }
             <div class="row g-4">
                 <!-- To Do Column -->
                 <div class="col-md-6">
-                    <div class="card h-100 shadow-sm border-warning">
-                        <div class="card-header bg-warning text-dark fw-bold">📝 To Do (Pending)</div>
+                    <div class="card h-100 shadow-lg border-0 rounded-4 overflow-hidden">
+                        <div class="card-header text-dark fw-bold p-3" style="background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%); border:none;"><i class="bi bi-list-task me-2"></i>To Do (Pending)</div>
                         <ul class="list-group list-group-flush" id="pendingList">
                             <?php 
                         $pending = $conn->query("SELECT * FROM todos WHERE status='pending' $filter_sql ORDER BY position ASC, created_at DESC");
@@ -358,8 +365,8 @@ body.dark-mode .navbar { background: #1e1e1e !important; color: #e0e0e0; }
 
                 <!-- Done Column -->
                 <div class="col-md-6">
-                    <div class="card h-100 shadow-sm border-success">
-                        <div class="card-header bg-success text-white fw-bold">✅ Done (Completed)</div>
+                    <div class="card h-100 shadow-lg border-0 rounded-4 overflow-hidden">
+                        <div class="card-header text-white fw-bold p-3" style="background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%); border:none;"><i class="bi bi-check2-circle me-2"></i>Done (Completed)</div>
                         <ul class="list-group list-group-flush" id="doneList">
                             <?php 
                         $done = $conn->query("SELECT * FROM todos WHERE status='done' $filter_sql ORDER BY position ASC, created_at DESC LIMIT 20");

@@ -117,41 +117,49 @@ body.dark-mode .navbar { background: #1e1e1e !important; color: #e0e0e0; }
         </nav>
 
         <div class="container-fluid px-4">
-            <div class="card p-4">
-                <h4 class="mb-3">📩 User Support Messages</h4>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5">
+                <div>
+                    <h2 class="fw-bold text-dark mb-1">📩 Support Inbox</h2>
+                    <p class="text-muted mb-0">Read and reply to user support messages.</p>
+                </div>
+            </div>
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5">
+                <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #fd7e14 0%, #d6680a 100%); border:none;">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-envelope-paper-fill me-2"></i>User Messages</h5>
+                </div>
                 <?php if($message): ?><div class="alert <?php echo $msg_type; ?>"><?php echo $message; ?></div><?php endif; ?>
                 
                 <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
                             <tr>
-                                <th>Date</th>
+                                <th class="ps-4 py-3">Date</th>
                                 <th>User</th>
                                 <th>Subject</th>
                                 <th>Message</th>
                                 <th>Status</th>
-                                <th>Action</th>
+                                <th class="text-end pe-4">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if($msgs_res && $msgs_res->num_rows > 0): ?>
                                 <?php while($row = $msgs_res->fetch_assoc()): ?>
                                 <tr>
-                                    <td style="white-space:nowrap;"><?php echo date("M d, Y", strtotime($row['created_at'])); ?></td>
-                                    <td><?php echo htmlspecialchars($row['username']); ?></td>
-                                    <td><?php echo htmlspecialchars($row['subject']); ?></td>
-                                    <td><?php echo nl2br(htmlspecialchars($row['message'])); ?></td>
+                                    <td class="ps-4 text-muted small" style="white-space:nowrap;"><?php echo date("M d, Y", strtotime($row['created_at'])); ?></td>
+                                    <td class="fw-bold text-primary"><?php echo htmlspecialchars($row['username']); ?></td>
+                                    <td class="fw-bold text-dark"><?php echo htmlspecialchars($row['subject']); ?></td>
+                                    <td class="text-muted small"><?php echo nl2br(htmlspecialchars($row['message'])); ?></td>
                                     <td><span class="badge <?php echo ($row['status'] == 'Resolved') ? 'bg-success' : 'bg-warning text-dark'; ?>"><?php echo htmlspecialchars($row['status'] ?? 'Open'); ?></span></td>
-                                    <td style="white-space:nowrap;">
-                                        <a href="mailto:?subject=Re: <?php echo urlencode($row['subject']); ?>&body=Hi <?php echo urlencode($row['username']); ?>,%0D%0A%0D%0ARegarding your message:%0D%0A> <?php echo urlencode($row['message']); ?>%0D%0A%0D%0A" class="btn btn-sm btn-primary" title="Reply via Email"><i class="bi bi-reply"></i></a>
+                                    <td class="text-end pe-4" style="white-space:nowrap;">
+                                        <a href="mailto:?subject=Re: <?php echo urlencode($row['subject']); ?>&body=Hi <?php echo urlencode($row['username']); ?>,%0D%0A%0D%0ARegarding your message:%0D%0A> <?php echo urlencode($row['message']); ?>%0D%0A%0D%0A" class="btn btn-sm btn-outline-primary border-0" title="Reply via Email"><i class="bi bi-reply-fill"></i></a>
                                         <form method="POST" class="d-inline">
                                             <input type="hidden" name="message_id" value="<?php echo $row['id']; ?>">
                                             <input type="hidden" name="current_status" value="<?php echo $row['status'] ?? 'Open'; ?>">
-                                            <button type="submit" name="toggle_status" class="btn btn-sm btn-secondary" title="Toggle Status"><i class="bi bi-arrow-repeat"></i></button>
+                                            <button type="submit" name="toggle_status" class="btn btn-sm btn-outline-secondary border-0" title="Toggle Status"><i class="bi bi-arrow-repeat"></i></button>
                                         </form>
                                         <form method="POST" class="d-inline" onsubmit="return confirm('Delete this message?');">
                                             <input type="hidden" name="message_id" value="<?php echo $row['id']; ?>">
-                                            <button type="submit" name="delete_message" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
+                                            <button type="submit" name="delete_message" class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash-fill"></i></button>
                                         </form>
                                     </td>
                                 </tr>

@@ -19,35 +19,73 @@ $user_role = $u_row['role'] ?? 'editor';
 $message = "";
 $toast_class = "";
 
+// Handle Update
+if(isset($_POST['update_video'])){
+    $id = (int)$_POST['id'];
+    $daily_limit = (int)$_POST['daily_limit'];
+    $status = $_POST['status'];
+    
+    // If manually setting to active, reset paused_by_limit
+    $paused_sql = "";
+    if ($status === 'active') {
+        $paused_sql = ", paused_by_limit=0";
+    }
+
+    $stmt = $conn->prepare("UPDATE videos SET daily_limit=?, status=? $paused_sql WHERE id=?");
+    $stmt->bind_param("isi", $daily_limit, $status, $id);
+    
+    if($stmt->execute()){
+        $message = "Video updated successfully!";
+        $toast_class = "bg-success";
+        logAction($conn, $_SESSION['admin'], 'Update Video', "Updated video ID: $id");
+    } else {
+        $message = "Error updating video.";
+        $toast_class = "bg-danger";
+    }
+    $stmt->close();
+}
+
 // Handle Delete
-if (isset($_POST['delete_video'])) {
-    $id = (int)$_POST['video_id'];
+if(isset($_POST['delete_video'])){
+    $id = (int)$_POST['id'];
     $conn->query("DELETE FROM videos WHERE id=$id");
     $conn->query("DELETE FROM video_views WHERE video_id=$id");
-    $message = "Video deleted successfully.";
+    $conn->query("DELETE FROM video_likes WHERE video_id=$id");
+    $conn->query("DELETE FROM video_comments WHERE video_id=$id");
+    $message = "Video deleted successfully!";
     $toast_class = "bg-danger";
     logAction($conn, $_SESSION['admin'], 'Delete Video', "Deleted video ID: $id");
 }
 
-// Handle Status Update
-if (isset($_POST['update_status'])) {
-    $id = (int)$_POST['video_id'];
-    $status = $_POST['status'];
-    $stmt = $conn->prepare("UPDATE videos SET status=? WHERE id=?");
-    $stmt->bind_param("si", $status, $id);
-    $stmt->execute();
-    $message = "Video status updated to $status.";
-    $toast_class = "bg-success";
-    logAction($conn, $_SESSION['admin'], 'Update Video Status', "Updated video ID: $id to $status");
+// Fetch Videos
+$search = $_GET['search'] ?? '';
+$platform_filter = $_GET['platform'] ?? '';
+
+$sql = "SELECT * FROM videos WHERE 1=1";
+if ($search) {
+    $sql .= " AND title LIKE '%" . $conn->real_escape_string($search) . "%'";
+}
+if ($platform_filter) {
+    $sql .= " AND platform = '" . $conn->real_escape_string($platform_filter) . "'";
+}
+$sql .= " ORDER BY id DESC";
+$videos = $conn->query($sql);
+
+// Fetch Stats
+$views_data = [];
+$today = date('Y-m-d');
+
+// Total Views
+$t_res = $conn->query("SELECT video_id, COUNT(*) as total FROM video_views GROUP BY video_id");
+while($row = $t_res->fetch_assoc()){
+    $views_data[$row['video_id']]['total'] = $row['total'];
 }
 
-// Fetch Videos
-$sql = "SELECT v.*, COUNT(vv.id) as current_views 
-        FROM videos v 
-        LEFT JOIN video_views vv ON v.id = vv.video_id 
-        GROUP BY v.id 
-        ORDER BY v.created_at DESC";
-$videos = $conn->query($sql);
+// Daily Views
+$d_res = $conn->query("SELECT video_id, COUNT(*) as today FROM video_views WHERE DATE(viewed_at) = '$today' GROUP BY video_id");
+while($row = $d_res->fetch_assoc()){
+    $views_data[$row['video_id']]['today'] = $row['today'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -71,7 +109,7 @@ body { background:#f8f9fc; font-family: 'Segoe UI', sans-serif; overflow-x: hidd
 body.dark-mode { background: #121212; color: #e0e0e0; }
 body.dark-mode .card { background: #1e1e1e; color: #e0e0e0; }
 body.dark-mode .navbar { background: #1e1e1e !important; color: #e0e0e0; }
-body.dark-mode .table { color: #e0e0e0; }
+body.dark-mode .form-control, body.dark-mode .form-select { background: #2d2d2d; border-color: #444; color: #e0e0e0; }
 #wrapper.toggled #sidebar-wrapper { margin-left: -250px; }
 @media (max-width: 768px) { #sidebar-wrapper { margin-left: -250px; position: fixed; z-index: 1000; height: 100%; top: 0; left: 0; } #wrapper.toggled #sidebar-wrapper { margin-left: 0; box-shadow: 0 0 15px rgba(0,0,0,0.5); } #page-content-wrapper { width: 100%; min-width: 100%; } #wrapper.toggled #page-content-wrapper::before { content: ""; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; } }
 </style>
@@ -88,45 +126,112 @@ body.dark-mode .table { color: #e0e0e0; }
             </div>
         </nav>
         <div class="container-fluid px-4">
-            <div class="card p-4">
-                <h5 class="mb-3">Boosted Videos List</h5>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead><tr><th>Video</th><th>Views / Target</th><th>Reward</th><th>Expires</th><th>Status</th><th>Action</th></tr></thead>
-                        <tbody>
-                            <?php if($videos && $videos->num_rows > 0): ?>
-                                <?php while($v = $videos->fetch_assoc()): 
-                                    $progress = ($v['target_views'] > 0) ? min(100, round(($v['current_views'] / $v['target_views']) * 100)) : 0;
-                                    $status_badge = 'bg-secondary';
-                                    if ($v['status'] == 'active') $status_badge = 'bg-success';
-                                    elseif ($v['status'] == 'completed') $status_badge = 'bg-primary';
-                                    elseif ($v['status'] == 'paused') $status_badge = 'bg-warning text-dark';
-                                    $expires = $v['expires_at'] ? date("M d, H:i", strtotime($v['expires_at'])) : 'Never';
-                                ?>
-                                <tr>
-                                    <td style="max-width: 250px;"><div class="fw-bold text-truncate" title="<?php echo htmlspecialchars($v['title']); ?>"><?php echo htmlspecialchars($v['title']); ?></div><a href="<?php echo htmlspecialchars($v['video_link']); ?>" target="_blank" class="small text-decoration-none"><i class="bi bi-box-arrow-up-right"></i> View Link</a></td>
-                                    <td style="min-width: 150px;"><div class="d-flex justify-content-between small mb-1"><span><?php echo $v['current_views']; ?></span><span><?php echo $v['target_views']; ?></span></div><div class="progress" style="height: 6px;"><div class="progress-bar bg-info" role="progressbar" style="width: <?php echo $progress; ?>%"></div></div><small class="text-muted"><?php echo $progress; ?>%</small></td>
-                                    <td><span class="badge bg-warning text-dark"><?php echo $v['points_per_view']; ?> Pts</span></td>
-                                    <td class="small text-muted"><?php echo $expires; ?></td>
-                                    <td><span class="badge <?php echo $status_badge; ?>"><?php echo ucfirst($v['status']); ?></span></td>
-                                    <td>
-                                        <div class="d-flex gap-1">
-                                            <?php if($v['status'] == 'active'): ?>
-                                                <form method="POST"><input type="hidden" name="video_id" value="<?php echo $v['id']; ?>"><input type="hidden" name="status" value="paused"><button type="submit" name="update_status" class="btn btn-sm btn-warning" title="Pause"><i class="bi bi-pause-fill"></i></button></form>
-                                            <?php elseif($v['status'] == 'paused'): ?>
-                                                <form method="POST"><input type="hidden" name="video_id" value="<?php echo $v['id']; ?>"><input type="hidden" name="status" value="active"><button type="submit" name="update_status" class="btn btn-sm btn-success" title="Resume"><i class="bi bi-play-fill"></i></button></form>
-                                            <?php endif; ?>
-                                            <form method="POST" onsubmit="return confirm('Delete this video?');"><input type="hidden" name="video_id" value="<?php echo $v['id']; ?>"><button type="submit" name="delete_video" class="btn btn-sm btn-danger" title="Delete"><i class="bi bi-trash"></i></button></form>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <?php endwhile; ?>
-                            <?php else: ?>
-                                <tr><td colspan="6" class="text-center py-4 text-muted">No videos found.</td></tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5">
+                <div>
+                    <h2 class="fw-bold text-dark mb-1">📺 Manage Videos</h2>
+                    <p class="text-muted mb-0">Track performance and manage your video campaigns.</p>
                 </div>
+                <div class="d-flex gap-3 mt-3 mt-md-0">
+                    <form method="GET" class="d-flex align-items-center position-relative">
+                        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" style="z-index: 5;"></i>
+                        <input type="text" name="search" class="form-control form-control-lg shadow-sm border-0 rounded-pill ps-5 me-2" placeholder="Search videos..." value="<?php echo htmlspecialchars($search); ?>" style="min-width: 200px;">
+                        <select name="platform" class="form-select form-select-lg shadow-sm border-0 rounded-pill ps-4 pe-5" onchange="this.form.submit()" style="min-width: 180px;">
+                            <option value="">All Platforms</option>
+                            <option value="youtube" <?php if($platform_filter == 'youtube') echo 'selected'; ?>>YouTube</option>
+                            <option value="facebook" <?php if($platform_filter == 'facebook') echo 'selected'; ?>>Facebook</option>
+                            <option value="facebook_reel" <?php if($platform_filter == 'facebook_reel') echo 'selected'; ?>>Reels</option>
+                        </select>
+                        <?php if($search || $platform_filter): ?>
+                            <a href="videos_list.php" class="btn btn-light btn-lg rounded-circle shadow-sm ms-2 d-flex align-items-center justify-content-center text-danger" style="width: 48px; height: 48px;" title="Clear Filters"><i class="bi bi-x-lg"></i></a>
+                        <?php endif; ?>
+                    </form>
+                    <a href="boost_video.php" class="btn btn-danger btn-lg rounded-pill shadow-sm px-4" style="background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); border:none;"><i class="bi bi-plus-lg me-2"></i>Add Video</a>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <?php if($videos && $videos->num_rows > 0): ?>
+                    <?php while($video = $videos->fetch_assoc()): 
+                        $vid = $video['id'];
+                        $total_views = $views_data[$vid]['total'] ?? 0;
+                        $today_views = $views_data[$vid]['today'] ?? 0;
+                        $target = $video['target_views'];
+                        $daily_limit = $video['daily_limit'];
+                        
+                        $progress = ($target > 0) ? min(100, round(($total_views / $target) * 100)) : 0;
+                        $daily_progress = ($daily_limit > 0) ? min(100, round(($today_views / $daily_limit) * 100)) : 0;
+                        
+                        $status = $video['status'];
+                        
+                        $platform = $video['platform'] ?? 'youtube';
+                        $icon = 'bi-play-circle-fill';
+                        if ($platform === 'facebook_reel') $icon = 'bi-camera-reels-fill';
+                        elseif ($platform === 'facebook') $icon = 'bi-facebook';
+                        elseif ($platform === 'youtube') $icon = 'bi-youtube';
+                    ?>
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-lg rounded-4 h-100 overflow-hidden">
+                            <div class="card-header text-white p-3" style="background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); border:none;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0 text-truncate" style="max-width: 70%;" title="<?php echo htmlspecialchars($video['title']); ?>"><i class="bi <?php echo $icon; ?> me-2"></i><?php echo htmlspecialchars($video['title']); ?></h5>
+                                    <span class="badge bg-white text-danger shadow-sm"><?php echo ucfirst($status); ?></span>
+                                </div>
+                            </div>
+                            <div class="card-body p-4">
+                                <!-- Progress Bars -->
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between small fw-bold text-muted mb-1">
+                                        <span><i class="bi bi-eye-fill me-1"></i>Total Views</span>
+                                        <span><?php echo number_format($total_views); ?> / <?php echo number_format($target); ?></span>
+                                    </div>
+                                    <div class="progress rounded-pill" style="height: 10px; background-color: #e9ecef;">
+                                        <div class="progress-bar" role="progressbar" style="width: <?php echo $progress; ?>%; background: linear-gradient(90deg, #ff0844, #ffb199);" aria-valuenow="<?php echo $progress; ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+
+                                <?php if($daily_limit > 0): ?>
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between small fw-bold text-muted mb-1">
+                                        <span><i class="bi bi-speedometer2 me-1"></i>Daily Limit</span>
+                                        <span><?php echo number_format($today_views); ?> / <?php echo number_format($daily_limit); ?></span>
+                                    </div>
+                                    <div class="progress rounded-pill" style="height: 10px; background-color: #e9ecef;">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: <?php echo $daily_progress; ?>%;" aria-valuenow="<?php echo $daily_progress; ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+
+                                <form method="POST" class="mt-auto">
+                                    <input type="hidden" name="id" value="<?php echo $video['id']; ?>">
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted fw-bold text-uppercase">Settings</label>
+                                        <div class="input-group mb-2">
+                                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-speedometer2 text-muted"></i></span>
+                                            <input type="number" name="daily_limit" class="form-control bg-light border-start-0" value="<?php echo $daily_limit; ?>" placeholder="Daily Limit">
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-toggle-on text-muted"></i></span>
+                                            <select name="status" class="form-select bg-light border-start-0">
+                                                <option value="active" <?php echo ($status=='active')?'selected':''; ?>>Active</option>
+                                                <option value="paused" <?php echo ($status=='paused')?'selected':''; ?>>Paused</option>
+                                                <option value="completed" <?php echo ($status=='completed')?'selected':''; ?>>Completed</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" name="update_video" class="btn btn-primary shadow-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border:none;"><i class="bi bi-save me-2"></i>Update</button>
+                                        <button type="submit" name="delete_video" class="btn btn-light text-danger shadow-sm" onclick="return confirm('Delete this video?');"><i class="bi bi-trash me-2"></i>Delete</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <div class="col-12 text-center py-5 text-muted">No videos found.</div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

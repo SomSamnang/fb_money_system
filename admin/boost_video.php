@@ -22,9 +22,11 @@ $toast_class = "";
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['boost_video'])) {
     $title = trim($_POST['title']);
     $link = trim($_POST['video_link']);
+    $type = $_POST['video_type']; // 'youtube', 'facebook', 'facebook_reel'
     $target = (int)$_POST['target_views'];
     $points = (int)$_POST['points_per_view'];
     $duration = (int)$_POST['duration'];
+    $daily_limit = (int)$_POST['daily_limit'];
     $campaign_days = (int)$_POST['campaign_days'];
     $expires_at = date('Y-m-d H:i:s', strtotime("+$campaign_days days"));
     
@@ -39,9 +41,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['boost_video'])) {
             $link = "https://www.facebook.com/plugins/video.php?href=" . urlencode($link) . "&show_text=false&t=0";
         }
 
-        $stmt = $conn->prepare("INSERT INTO videos (title, video_link, target_views, points_per_view, duration, expires_at) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO videos (title, video_link, target_views, points_per_view, duration, expires_at, daily_limit, platform) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         if ($stmt) {
-            $stmt->bind_param("ssiiis", $title, $link, $target, $points, $duration, $expires_at);
+            $stmt->bind_param("ssiiisis", $title, $link, $target, $points, $duration, $expires_at, $daily_limit, $type);
             if ($stmt->execute()) {
                 $message = "Video successfully added for boosting!";
                 $toast_class = "bg-success";
@@ -99,31 +101,65 @@ body.dark-mode .form-control { background: #2d2d2d; border-color: #444; color: #
         <div class="container-fluid px-4">
             <div class="row justify-content-center">
                 <div class="col-lg-8">
-                    <div class="card p-5">
-                        <div class="text-center mb-4"><h1 class="h3 text-danger fw-bold"><i class="bi bi-youtube me-2"></i>Boost New Video</h1><p class="text-muted">Add a video to the system to reward users for watching.</p></div>
-                        <form method="POST">
-                            <div class="mb-3"><label class="form-label fw-bold">Video Title</label><input type="text" class="form-control form-control-lg" name="title" placeholder="e.g. Watch this amazing trailer" required></div>
-                            <div class="mb-3"><label class="form-label fw-bold">Video Link (YouTube or Facebook URL)</label><input type="url" class="form-control form-control-lg" name="video_link" placeholder="https://www.youtube.com/watch?v=... or https://www.facebook.com/..." required></div>
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label fw-bold">Target Views</label>
-                                    <input type="number" class="form-control" name="target_views" placeholder="1000" value="1000">
+                    <div class="card border-0 shadow-lg overflow-hidden rounded-4">
+                        <div class="card-header text-white p-4 text-center" style="background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);">
+                            <h2 class="fw-bold mb-1"><i class="bi bi-youtube me-2"></i>Boost New Video</h2>
+                            <p class="mb-0 opacity-75">Get more views and engagement instantly!</p>
+                        </div>
+                        <div class="card-body p-5">
+                        <form method="POST" onsubmit="return confirm('Are you sure you want to start boosting this video?');">
+                            <div class="mb-3"><label class="form-label fw-bold">Video Title</label><div class="input-group"><span class="input-group-text"><i class="bi bi-type-h1"></i></span><input type="text" class="form-control form-control-lg" name="title" placeholder="e.g. Watch this amazing trailer" required></div></div>
+                            <div class="mb-3"><label class="form-label fw-bold">Video Link (YouTube or Facebook URL)</label><div class="input-group"><span class="input-group-text"><i class="bi bi-link-45deg"></i></span><input type="url" class="form-control form-control-lg" name="video_link" placeholder="https://www.youtube.com/watch?v=... or https://www.facebook.com/..." required></div></div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Video Type</label>
+                                <div class="input-group"><span class="input-group-text"><i class="bi bi-camera-reels"></i></span><select class="form-select form-select-lg" name="video_type">
+                                    <option value="youtube">YouTube Video</option>
+                                    <option value="facebook">Facebook Video</option>
+                                </select></div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Target Views</label>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text"><i class="bi bi-bullseye"></i></span>
+                                    <select class="form-select form-select-lg" id="target_select" onchange="updateTargetInput(this)">
+                                        <option value="500">500 Views</option>
+                                        <option value="1000" selected>1,000 Views</option>
+                                        <option value="2000">2,000 Views</option>
+                                        <option value="10000">10,000 Views</option>
+                                        <option value="120000">120K Views</option>
+                                        <option value="1000000">1M Views</option>
+                                        <option value="44000000">44M Views</option>
+                                        <option value="120000000">120M Views</option>
+                                        <option value="custom">Custom Amount</option>
+                                    </select>
                                 </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label fw-bold">Points Reward</label>
-                                    <input type="number" class="form-control" name="points_per_view" placeholder="10" value="10">
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label fw-bold">Duration (Seconds)</label>
-                                    <input type="number" class="form-control" name="duration" placeholder="30" value="30">
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label fw-bold">Campaign Duration (Days)</label>
-                                    <input type="number" class="form-control" name="campaign_days" placeholder="1" value="1" min="1">
+                                <div id="custom_amount_wrapper" style="max-height: 0; opacity: 0; overflow: hidden; transition: all 0.4s ease-in-out;">
+                                    <input type="number" class="form-control form-control-lg mt-2" name="target_views" id="target_input" placeholder="Enter custom amount" value="1000" required>
                                 </div>
                             </div>
-                            <div class="d-grid"><button type="submit" name="boost_video" class="btn btn-danger btn-lg fw-bold shadow-sm"><i class="bi bi-play-btn-fill me-2"></i>Start Boosting Video</button></div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Points Reward</label>
+                                    <div class="input-group"><span class="input-group-text"><i class="bi bi-coin"></i></span><input type="number" class="form-control" name="points_per_view" placeholder="10" value="10"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Duration (Seconds)</label>
+                                    <div class="input-group"><span class="input-group-text"><i class="bi bi-stopwatch"></i></span><input type="number" class="form-control" name="duration" placeholder="30" value="30"></div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Daily Limit (Optional)</label>
+                                    <div class="input-group"><span class="input-group-text"><i class="bi bi-speedometer2"></i></span><input type="number" class="form-control" name="daily_limit" placeholder="0 (No limit)" value="0"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Campaign Duration (Days)</label>
+                                    <div class="input-group"><span class="input-group-text"><i class="bi bi-calendar-event"></i></span><input type="number" class="form-control" name="campaign_days" placeholder="1" value="1" min="1"></div>
+                                </div>
+                            </div>
+                            <div class="d-grid"><button type="submit" name="boost_video" class="btn btn-danger btn-lg fw-bold shadow-sm" style="background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); border:none;"><i class="bi bi-play-btn-fill me-2"></i>Start Boosting Video</button></div>
                         </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -138,6 +174,23 @@ document.getElementById('page-content-wrapper').addEventListener('click', functi
 document.getElementById('sidebarClose').addEventListener('click', function(e) { e.preventDefault(); document.getElementById('wrapper').classList.remove('toggled'); });
 const toggle = document.getElementById('darkModeToggle'); const body = document.body; if(localStorage.getItem('darkMode') === 'enabled'){ body.classList.add('dark-mode'); toggle.textContent = '☀️'; } toggle.addEventListener('click', () => { body.classList.toggle('dark-mode'); localStorage.setItem('darkMode', body.classList.contains('dark-mode') ? 'enabled' : 'disabled'); toggle.textContent = body.classList.contains('dark-mode') ? '☀️' : '🌙'; });
 <?php if($message): ?>const toastEl = document.getElementById('liveToast'); const toast = new bootstrap.Toast(toastEl); toast.show();<?php endif; ?>
+
+function updateTargetInput(select) {
+    const input = document.getElementById('target_input');
+    const wrapper = document.getElementById('custom_amount_wrapper');
+    if(select.value === 'custom') {
+        wrapper.style.maxHeight = '100px';
+        wrapper.style.opacity = '1';
+        input.value = '';
+        input.required = true;
+        input.focus();
+    } else {
+        wrapper.style.maxHeight = '0';
+        wrapper.style.opacity = '0';
+        input.value = select.value;
+        input.required = false;
+    }
+}
 </script>
 </body>
 </html>

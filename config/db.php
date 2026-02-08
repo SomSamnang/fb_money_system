@@ -80,9 +80,12 @@ $conn->query("CREATE TABLE IF NOT EXISTS settings ( setting_key VARCHAR(50) PRIM
 $conn->query("CREATE TABLE IF NOT EXISTS pages ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100) NOT NULL, fb_link TEXT NOT NULL )");
 checkAndAddColumn($conn, 'pages', 'target_clicks', "INT DEFAULT 0");
 checkAndAddColumn($conn, 'pages', 'daily_limit', "INT DEFAULT 0");
-checkAndAddColumn($conn, 'pages', 'type', "ENUM('page', 'follower') DEFAULT 'page'");
+checkAndAddColumn($conn, 'pages', 'type', "ENUM('page', 'follower', 'post') DEFAULT 'page'");
+// Ensure 'post' is added to the ENUM list if the column already exists
+$conn->query("ALTER TABLE pages MODIFY COLUMN type ENUM('page', 'follower', 'post') DEFAULT 'page'");
 checkAndAddColumn($conn, 'pages', 'paused_by_limit', "TINYINT(1) DEFAULT 0");
 checkAndAddColumn($conn, 'pages', 'status', "ENUM('active', 'completed', 'paused') DEFAULT 'active'");
+checkAndAddColumn($conn, 'pages', 'created_at', "TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
 
 // Public Users Table
 $conn->query("CREATE TABLE IF NOT EXISTS users (
@@ -137,6 +140,8 @@ $conn->query("CREATE TABLE IF NOT EXISTS video_views (
 )");
 checkAndAddColumn($conn, 'videos', 'expires_at', "DATETIME NULL DEFAULT NULL");
 checkAndAddColumn($conn, 'videos', 'platform', "VARCHAR(50) DEFAULT 'youtube'");
+checkAndAddColumn($conn, 'videos', 'daily_limit', "INT DEFAULT 0");
+checkAndAddColumn($conn, 'videos', 'paused_by_limit', "TINYINT(1) DEFAULT 0");
 
 // Video Interactions
 $conn->query("CREATE TABLE IF NOT EXISTS video_likes (

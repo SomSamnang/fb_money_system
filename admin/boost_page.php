@@ -102,14 +102,36 @@ body.dark-mode .form-control { background: #2d2d2d; border-color: #444; color: #
         <div class="container-fluid px-4">
             <div class="row justify-content-center">
                 <div class="col-lg-8">
-                    <div class="card p-5">
-                        <div class="text-center mb-4"><h1 class="h3 text-primary fw-bold"><i class="bi bi-rocket-takeoff-fill me-2"></i>Boost New Page</h1><p class="text-muted">Add a Facebook page to the system to start tracking and boosting engagement.</p></div>
-                        <form method="POST">
+                    <div class="card border-0 shadow-lg overflow-hidden rounded-4">
+                        <div class="card-header text-white p-4 text-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <h2 class="fw-bold mb-1"><i class="bi bi-rocket-takeoff-fill me-2"></i>Boost New Page</h2>
+                            <p class="mb-0 opacity-75">Launch your page into the stratosphere!</p>
+                        </div>
+                        <div class="card-body p-5">
+                        <form method="POST" onsubmit="return confirm('Are you sure you want to start boosting this page?');">
                             <div class="mb-4"><label class="form-label fw-bold">Page Name</label><div class="input-group"><span class="input-group-text"><i class="bi bi-tag-fill"></i></span><input type="text" class="form-control form-control-lg" name="page_name" placeholder="e.g. My Business Page" required></div></div>
                             <div class="mb-4"><label class="form-label fw-bold">Facebook Page URL</label><div class="input-group"><span class="input-group-text"><i class="bi bi-facebook"></i></span><input type="url" class="form-control form-control-lg" name="fb_link" placeholder="https://www.facebook.com/..." required></div></div>
-                            <div class="mb-4"><label class="form-label fw-bold">Target Clicks (Optional)</label><div class="input-group"><span class="input-group-text"><i class="bi bi-bullseye"></i></span><input type="number" class="form-control form-control-lg" name="target_clicks" placeholder="e.g. 1000" value="0"></div></div>
-                            <div class="d-grid"><button type="submit" name="boost_page" class="btn btn-primary btn-lg fw-bold shadow-sm"><i class="bi bi-lightning-fill me-2"></i>Start Boosting</button></div>
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Target Clicks</label>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text"><i class="bi bi-bullseye"></i></span>
+                                    <select class="form-select form-select-lg" id="target_select" onchange="updateTargetInput(this)">
+                                        <option value="500">500 Clicks</option>
+                                        <option value="1000" selected>1,000 Clicks</option>
+                                        <option value="120000">120K Clicks</option>
+                                        <option value="1000000">1M Clicks</option>
+                                        <option value="44000000">44M Clicks</option>
+                                        <option value="120000000">120M Clicks</option>
+                                        <option value="custom">Custom Amount</option>
+                                    </select>
+                                </div>
+                                <div id="custom_amount_wrapper" style="max-height: 0; opacity: 0; overflow: hidden; transition: all 0.4s ease-in-out;">
+                                    <input type="number" class="form-control form-control-lg mt-2" name="target_clicks" id="target_input" placeholder="Enter custom amount" value="1000" required>
+                                </div>
+                            </div>
+                            <div class="d-grid"><button type="submit" name="boost_page" class="btn btn-primary btn-lg fw-bold shadow-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border:none;"><i class="bi bi-lightning-fill me-2"></i>Start Boosting</button></div>
                         </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -124,6 +146,23 @@ document.getElementById('page-content-wrapper').addEventListener('click', functi
 document.getElementById('sidebarClose').addEventListener('click', function(e) { e.preventDefault(); document.getElementById('wrapper').classList.remove('toggled'); });
 const toggle = document.getElementById('darkModeToggle'); const body = document.body; if(localStorage.getItem('darkMode') === 'enabled'){ body.classList.add('dark-mode'); toggle.textContent = '☀️'; } toggle.addEventListener('click', () => { body.classList.toggle('dark-mode'); localStorage.setItem('darkMode', body.classList.contains('dark-mode') ? 'enabled' : 'disabled'); toggle.textContent = body.classList.contains('dark-mode') ? '☀️' : '🌙'; });
 <?php if($message): ?>const toastEl = document.getElementById('liveToast'); const toast = new bootstrap.Toast(toastEl); toast.show();<?php endif; ?>
+
+function updateTargetInput(select) {
+    const input = document.getElementById('target_input');
+    const wrapper = document.getElementById('custom_amount_wrapper');
+    if(select.value === 'custom') {
+        wrapper.style.maxHeight = '100px';
+        wrapper.style.opacity = '1';
+        input.value = '';
+        input.required = true;
+        input.focus();
+    } else {
+        wrapper.style.maxHeight = '0';
+        wrapper.style.opacity = '0';
+        input.value = select.value;
+        input.required = false;
+    }
+}
 </script>
 </body>
 </html>

@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['video_id'])) {
     $video_id = (int)$_POST['video_id'];
 
     // Check if video exists and is active
-    $v_stmt = $conn->prepare("SELECT points_per_view, target_views, expires_at FROM videos WHERE id=? AND status='active'");
+    $v_stmt = $conn->prepare("SELECT points_per_view, target_views, expires_at, daily_limit FROM videos WHERE id=? AND status='active'");
     $v_stmt->bind_param("i", $video_id);
     $v_stmt->execute();
     $video = $v_stmt->get_result()->fetch_assoc();
@@ -29,6 +29,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['video_id'])) {
     if ($video['expires_at'] && strtotime($video['expires_at']) < time()) {
         echo json_encode(['status' => 'error', 'message' => 'Campaign expired']);
         exit;
+    }
+
+    // Check Daily Limit
+    if ($video['daily_limit'] > 0) {
+        $today = date('Y-m-d');
+        $cnt_daily = $conn->prepare("SELECT COUNT(*) FROM video_views WHERE video_id=? AND DATE(viewed_at) = ?");
+        $cnt_daily->bind_param("is", $video_id, $today);
+        $cnt_daily->execute();
+        $daily_views = $cnt_daily->get_result()->fetch_row()[0];
+        $cnt_daily->close();
+
+        if ($daily_views >= $video['daily_limit']) {
+            $conn->query("UPDATE videos SET status='paused', paused_by_limit=1 WHERE id=$video_id");
+            echo json_encode(['status' => 'error', 'message' => 'Daily limit reached']);
+            exit;
+        }
     }
 
     // Check if user already viewed this video
