@@ -144,7 +144,7 @@ body.dark-mode .table { color: #e0e0e0; }
                             <tr>
                                 <td class="ps-4 fw-bold text-primary"><?php echo htmlspecialchars($item['title']); ?></td>
                                 <td><span class="badge bg-secondary bg-opacity-10 text-secondary border"><?php echo $type_label; ?></span></td>
-                                <td class="fw-bold"><?php echo number_format($item['target']); ?></td>
+                                <td class="fw-bold"><?php echo formatNumber($item['target']); ?></td>
                                 <td>
                                     <form method="POST" class="d-inline">
                                         <input type="hidden" name="id" value="<?php echo $item['id']; ?>">

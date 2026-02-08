@@ -18,18 +18,41 @@ if (isset($_SESSION['user_id'])) {
     }
 }
 
-// Fetch Active Videos
-$filter = $_GET['filter'] ?? 'all';
-$sql = "SELECT * FROM videos WHERE status='active' AND (expires_at IS NULL OR expires_at > NOW())";
-
-if ($filter === 'reels') {
-    $sql .= " AND platform = 'facebook_reel'";
-} elseif ($filter === 'videos') {
-    $sql .= " AND platform != 'facebook_reel'";
+// Fetch Followed Pages by User
+$followed_pages = [];
+if (isset($_SESSION['user_id'])) {
+    $f_stmt = $conn->prepare("SELECT page FROM clicks WHERE user_id=? AND type='follow'");
+    $f_stmt->bind_param("i", $_SESSION['user_id']);
+    $f_stmt->execute();
+    $f_res = $f_stmt->get_result();
+    while($row = $f_res->fetch_assoc()) {
+        $followed_pages[$row['page']] = true;
+    }
+    $f_stmt->close();
 }
 
-$sql .= " ORDER BY id DESC";
-$videos_res = $conn->query($sql);
+// Fetch Active Content
+$filter = $_GET['filter'] ?? 'all';
+$items = [];
+
+// 1. Fetch Videos
+if ($filter == 'all' || $filter == 'videos' || $filter == 'reels') {
+    $sql = "SELECT id, title, video_link as link, points_per_view as points, duration, platform, 'video' as content_type FROM videos WHERE status='active' AND (expires_at IS NULL OR expires_at > NOW())";
+    if ($filter === 'reels') $sql .= " AND platform = 'facebook_reel'";
+    elseif ($filter === 'videos') $sql .= " AND platform != 'facebook_reel'";
+    $res = $conn->query($sql);
+    while($row = $res->fetch_assoc()) $items[] = $row;
+}
+
+// 2. Fetch Followers
+if ($filter == 'all' || $filter == 'followers') {
+    $sql = "SELECT id, name as title, fb_link as link, 5 as points, 10 as duration, 'facebook' as platform, 'follower' as content_type FROM pages WHERE type='follower' AND status='active'";
+    $res = $conn->query($sql);
+    while($row = $res->fetch_assoc()) $items[] = $row;
+}
+
+// Sort by ID DESC
+usort($items, function($a, $b) { return $b['id'] - $a['id']; });
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -148,35 +171,54 @@ $videos_res = $conn->query($sql);
                 <div class="d-flex justify-content-center mb-4">
                     <a href="videos.php" class="btn <?php echo $filter == 'all' ? 'btn-dark' : 'btn-outline-dark'; ?> rounded-pill me-2 px-4 fw-bold">All</a>
                     <a href="videos.php?filter=videos" class="btn <?php echo $filter == 'videos' ? 'btn-danger' : 'btn-outline-danger'; ?> rounded-pill me-2 px-4 fw-bold"><i class="bi bi-play-btn-fill me-1"></i> Videos</a>
-                    <a href="videos.php?filter=reels" class="btn <?php echo $filter == 'reels' ? 'btn-primary' : 'btn-outline-primary'; ?> rounded-pill px-4 fw-bold"><i class="bi bi-camera-reels-fill me-1"></i> Reels</a>
+                    <a href="videos.php?filter=reels" class="btn <?php echo $filter == 'reels' ? 'btn-primary' : 'btn-outline-primary'; ?> rounded-pill me-2 px-4 fw-bold"><i class="bi bi-camera-reels-fill me-1"></i> Reels</a>
+                    <a href="videos.php?filter=followers" class="btn <?php echo $filter == 'followers' ? 'btn-success' : 'btn-outline-success'; ?> rounded-pill px-4 fw-bold"><i class="bi bi-person-plus-fill me-1"></i> Followers</a>
                 </div>
 
         <div class="row g-4">
-            <?php if ($videos_res && $videos_res->num_rows > 0): ?>
-                <?php while($video = $videos_res->fetch_assoc()): 
-                    $platform = $video['platform'] ?? 'youtube';
+            <?php if (!empty($items)): ?>
+                <?php foreach($items as $item): 
+                    $platform = $item['platform'] ?? 'youtube';
                     $icon_class = 'bi-play-circle-fill';
                     if ($platform === 'facebook_reel') $icon_class = 'bi-camera-reels-fill';
                     elseif ($platform === 'facebook') $icon_class = 'bi-facebook';
                     elseif ($platform === 'youtube') $icon_class = 'bi-youtube';
+                    
+                    if ($item['content_type'] == 'follower') $icon_class = 'bi-person-plus-fill';
+                    
+                    $btn_text = ($item['content_type'] == 'follower') ? 'Follow Now' : 'Watch Now';
+                    $btn_action = ($item['content_type'] == 'follower') ? "openFollowModal({$item['id']}, '" . htmlspecialchars($item['title'], ENT_QUOTES) . "', '{$item['link']}', {$item['points']})" : "openVideoModal({$item['id']}, '" . htmlspecialchars($item['title'], ENT_QUOTES) . "', '" . htmlspecialchars($item['link'], ENT_QUOTES) . "', {$item['duration']})";
+                    
+                    $is_followed = ($item['content_type'] == 'follower' && isset($followed_pages[$item['title']]));
+                    $btn_style = "background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); border:none;";
+                    $btn_disabled = "";
+
+                    if ($is_followed) {
+                        $btn_text = '<i class="bi bi-check-circle-fill me-1"></i> Followed';
+                        $btn_style = "background: #198754; border:none; opacity: 0.8;";
+                        $btn_disabled = "disabled";
+                    }
                 ?>
                 <div class="col-md-6 col-lg-4">
                     <div class="card video-card h-100">
                         <div class="thumbnail-placeholder">
+                            <?php if($is_followed): ?>
+                                <div class="position-absolute top-0 end-0 m-3 badge bg-success rounded-pill shadow-sm z-3"><i class="bi bi-check-lg"></i> Done</div>
+                            <?php endif; ?>
                             <i class="bi <?php echo $icon_class; ?> display-1 play-icon"></i>
                         </div>
                         <div class="card-body p-4 text-center">
-                            <h5 class="card-title fw-bold text-truncate mb-3"><?php echo htmlspecialchars($video['title']); ?></h5>
+                            <h5 class="card-title fw-bold text-truncate mb-3"><?php echo htmlspecialchars($item['title']); ?></h5>
                             <div class="d-flex justify-content-center gap-3 mb-4">
-                                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill"><i class="bi bi-coin me-1"></i>+<?php echo $video['points_per_view']; ?> Pts</span>
-                                <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2 rounded-pill"><i class="bi bi-clock me-1"></i><?php echo $video['duration']; ?>s</span>
+                                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill"><i class="bi bi-coin me-1"></i>+<?php echo $item['points']; ?> Pts</span>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2 rounded-pill"><i class="bi bi-clock me-1"></i><?php echo $item['duration']; ?>s</span>
                             </div>
                             
                             <?php if(isset($_SESSION['user_id'])): ?>
                                 <button class="btn btn-danger w-100 rounded-pill fw-bold shadow-sm py-2" 
-                                        style="background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); border:none;"
-                                        onclick="openVideoModal(<?php echo $video['id']; ?>, '<?php echo htmlspecialchars($video['title']); ?>', '<?php echo htmlspecialchars($video['video_link']); ?>', <?php echo $video['duration']; ?>)">
-                                    Watch Now
+                                        style="<?php echo $btn_style; ?>"
+                                        onclick="<?php echo $btn_action; ?>" <?php echo $btn_disabled; ?>>
+                                    <?php echo $btn_text; ?>
                                 </button>
                             <?php else: ?>
                                 <a href="login_user.php" class="btn btn-outline-secondary w-100 rounded-pill py-2">Login to Earn</a>
@@ -184,9 +226,9 @@ $videos_res = $conn->query($sql);
                         </div>
                     </div>
                 </div>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             <?php else: ?>
-                <div class="col-12 text-center py-5 text-muted">No videos available to watch right now.</div>
+                <div class="col-12 text-center py-5 text-muted">No content available right now.</div>
             <?php endif; ?>
         </div>
             </div>
@@ -229,6 +271,25 @@ $videos_res = $conn->query($sql);
                 </a>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="stopVideo()">Close</button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Follow Modal -->
+    <div class="modal fade" id="followModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title">Follow to Earn</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body text-center p-4">
+            <i class="bi bi-facebook display-1 text-primary mb-3"></i>
+            <p class="lead">Click the button below to follow the page.</p>
+            <p class="small text-muted">A new tab will open. Follow the page, then return here to claim your points.</p>
+            <a href="#" id="followLinkBtn" target="_blank" class="btn btn-primary btn-lg rounded-pill px-5 mb-3" onclick="startFollowTimer()"><i class="bi bi-hand-thumbs-up-fill me-2"></i>Follow Page</a>
+            <div id="followTimerDisplay" class="fw-bold text-muted mt-2"></div>
           </div>
         </div>
       </div>
@@ -295,6 +356,43 @@ $videos_res = $conn->query($sql);
                 display.textContent = "Claiming Reward...";
                 display.className = "fw-bold text-success";
                 claimReward(id);
+            }
+        }, 1000);
+    }
+
+    let followId;
+    let followPageName;
+    function openFollowModal(id, title, link, points) {
+        followId = id;
+        followPageName = title;
+        document.getElementById('followLinkBtn').href = link;
+        document.getElementById('followTimerDisplay').textContent = "";
+        document.getElementById('followTimerDisplay').className = "fw-bold text-muted mt-2";
+        new bootstrap.Modal(document.getElementById('followModal')).show();
+    }
+
+    function startFollowTimer() {
+        // Track Click
+        const formData = new FormData();
+        formData.append('page', followPageName);
+        formData.append('type', 'follow');
+        fetch('track_click.php', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .catch(e => console.error(e));
+
+        let timeLeft = 10; // 10 seconds to verify/return
+        const display = document.getElementById('followTimerDisplay');
+        display.textContent = `Verifying in ${timeLeft}s...`;
+        
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            display.textContent = `Verifying in ${timeLeft}s...`;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                display.textContent = "Points Added!";
+                display.className = "fw-bold text-success mt-2";
+                setTimeout(() => location.reload(), 1000);
             }
         }, 1000);
     }

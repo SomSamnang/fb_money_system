@@ -224,7 +224,7 @@ body.dark-mode #page-loader { background: #121212; }
                 <div class="d-flex justify-content-between align-items-center z-1 position-relative">
                     <div>
                         <h6 class="text-uppercase mb-1 opacity-75 fw-bold">Total Users</h6>
-                        <h2 class="display-5 fw-bold mb-0"><?php echo number_format($total_users); ?></h2>
+                        <h2 class="display-5 fw-bold mb-0"><?php echo formatNumber($total_users); ?></h2>
                     </div>
                     <div class="p-3 bg-white bg-opacity-25 rounded-circle">
                         <i class="bi bi-people-fill fs-1"></i>
@@ -256,7 +256,7 @@ body.dark-mode #page-loader { background: #121212; }
                 <div class="d-flex justify-content-between align-items-center z-1 position-relative">
                     <div>
                         <h6 class="text-uppercase mb-1 opacity-75 fw-bold">Total Visitors</h6>
-                        <h2 class="display-5 fw-bold mb-0"><?php echo number_format($total_visitors); ?></h2>
+                        <h2 class="display-5 fw-bold mb-0"><?php echo formatNumber($total_visitors); ?></h2>
                     </div>
                     <div class="p-3 bg-white bg-opacity-25 rounded-circle">
                         <i class="bi bi-eye-fill fs-1"></i>
@@ -304,7 +304,7 @@ body.dark-mode #page-loader { background: #121212; }
                 <div class="border-0 shadow-sm rounded-4 p-3 text-center bg-white h-100 position-relative overflow-hidden">
                     <div class="position-absolute top-0 start-0 w-100 h-100 opacity-10" style="background: linear-gradient(135deg, #4e73df, #224abe);"></div>
                     <div class="fw-bold text-primary text-capitalize text-truncate" title="<?php echo htmlspecialchars($tp['page']); ?>"><?php echo htmlspecialchars($tp['page']); ?></div>
-                    <div class="h3 mb-0 mt-2 fw-bold"><?php echo $tp['total_clicks']; ?></div>
+                    <div class="h3 mb-0 mt-2 fw-bold"><?php echo formatNumber($tp['total_clicks']); ?></div>
                     <small class="text-muted">Clicks</small>
                 </div>
             </div>
@@ -325,7 +325,7 @@ body.dark-mode #page-loader { background: #121212; }
                 <div class="border-0 shadow-sm rounded-4 p-3 text-center bg-white h-100 position-relative overflow-hidden">
                     <div class="position-absolute top-0 start-0 w-100 h-100 opacity-10" style="background: linear-gradient(135deg, #ff0844, #ffb199);"></div>
                     <div class="fw-bold text-danger text-truncate" title="<?php echo htmlspecialchars($tv['title']); ?>"><?php echo htmlspecialchars($tv['title']); ?></div>
-                    <div class="h3 mb-0 mt-2 fw-bold"><?php echo $tv['total_likes']; ?></div>
+                    <div class="h3 mb-0 mt-2 fw-bold"><?php echo formatNumber($tv['total_likes']); ?></div>
                     <small class="text-muted">Likes</small>
                 </div>
             </div>
@@ -399,14 +399,14 @@ body.dark-mode #page-loader { background: #121212; }
             <div class="card-body p-4">
                 <div class="mb-4">
                     <div class="d-flex justify-content-between small fw-bold text-muted mb-1">
-                        <span><i class="bi bi-hand-thumbs-up-fill me-1"></i>Follows: <?php echo $follow; ?></span>
-                        <span><i class="bi bi-share-fill me-1"></i>Shares: <?php echo $share; ?></span>
+                        <span><i class="bi bi-hand-thumbs-up-fill me-1"></i>Follows: <?php echo formatNumber($follow); ?></span>
+                        <span><i class="bi bi-share-fill me-1"></i>Shares: <?php echo formatNumber($share); ?></span>
                     </div>
                     <?php if($target > 0): ?>
                     <div class="progress rounded-pill" style="height: 10px; background-color: #e9ecef;">
                         <div class="progress-bar" role="progressbar" style="width: <?php echo $progress; ?>%; background: linear-gradient(90deg, #667eea, #764ba2);" aria-valuenow="<?php echo $progress; ?>" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
-                    <div class="text-end small text-muted mt-1"><?php echo $total_clicks; ?> / <?php echo $target; ?></div>
+                    <div class="text-end small text-muted mt-1"><?php echo formatNumber($total_clicks); ?> / <?php echo formatNumber($target); ?></div>
                     <?php else: ?>
                     <div class="progress rounded-pill" style="height: 10px; background-color: #e9ecef;">
                         <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%; background: linear-gradient(90deg, #667eea, #764ba2);"></div>

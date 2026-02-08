@@ -182,7 +182,7 @@ body.dark-mode .form-control, body.dark-mode .form-select { background: #2d2d2d;
                                 <div class="mb-4">
                                     <div class="d-flex justify-content-between small fw-bold text-muted mb-1">
                                         <span><i class="bi bi-eye-fill me-1"></i>Total Views</span>
-                                        <span><?php echo number_format($total_views); ?> / <?php echo number_format($target); ?></span>
+                                        <span><?php echo formatNumber($total_views); ?> / <?php echo formatNumber($target); ?></span>
                                     </div>
                                     <div class="progress rounded-pill" style="height: 10px; background-color: #e9ecef;">
                                         <div class="progress-bar" role="progressbar" style="width: <?php echo $progress; ?>%; background: linear-gradient(90deg, #ff0844, #ffb199);" aria-valuenow="<?php echo $progress; ?>" aria-valuemin="0" aria-valuemax="100"></div>
@@ -193,7 +193,7 @@ body.dark-mode .form-control, body.dark-mode .form-select { background: #2d2d2d;
                                 <div class="mb-4">
                                     <div class="d-flex justify-content-between small fw-bold text-muted mb-1">
                                         <span><i class="bi bi-speedometer2 me-1"></i>Daily Limit</span>
-                                        <span><?php echo number_format($today_views); ?> / <?php echo number_format($daily_limit); ?></span>
+                                        <span><?php echo formatNumber($today_views); ?> / <?php echo formatNumber($daily_limit); ?></span>
                                     </div>
                                     <div class="progress rounded-pill" style="height: 10px; background-color: #e9ecef;">
                                         <div class="progress-bar bg-warning" role="progressbar" style="width: <?php echo $daily_progress; ?>%;" aria-valuenow="<?php echo $daily_progress; ?>" aria-valuemin="0" aria-valuemax="100"></div>

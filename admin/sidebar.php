@@ -82,10 +82,12 @@ if (isset($user_role) && $user_role === 'admin') {
             <a href="boost_post.php" class="list-group-item list-group-item-action ps-4 small <?php echo ($current_page == 'boost_post.php') ? 'active' : ''; ?>"><i class="bi bi-plus-circle me-2"></i> <span>Add Post</span></a>
             <a href="posts_list.php" class="list-group-item list-group-item-action ps-4 small <?php echo ($current_page == 'posts_list.php') ? 'active' : ''; ?>"><i class="bi bi-list-ul me-2"></i> <span>Manage Posts</span></a>
         </div>
-        <?php $is_followers = ($current_page == 'boost_follower.php' || $current_page == 'followers_list.php'); ?>
+        <?php $is_followers = ($current_page == 'boost_follower.php' || $current_page == 'followers_list.php' || $current_page == 'add_follower_fast.php' || $current_page == 'fast_followers_list.php'); ?>
         <a href="#followersSubmenu" class="list-group-item list-group-item-action dropdown-toggle" data-bs-toggle="collapse" aria-expanded="<?php echo $is_followers ? 'true' : 'false'; ?>"><i class="bi bi-person-plus-fill me-2 text-light"></i> <span>Boost Follower</span></a>
         <div class="collapse <?php echo $is_followers ? 'show' : ''; ?>" id="followersSubmenu">
             <a href="boost_follower.php" class="list-group-item list-group-item-action ps-4 small <?php echo ($current_page == 'boost_follower.php') ? 'active' : ''; ?>"><i class="bi bi-plus-circle me-2"></i> <span>Add Follower</span></a>
+            <a href="add_follower_fast.php" class="list-group-item list-group-item-action ps-4 small <?php echo ($current_page == 'add_follower_fast.php') ? 'active' : ''; ?>"><i class="bi bi-lightning-fill me-2"></i> <span>Fast Add</span></a>
+            <a href="fast_followers_list.php" class="list-group-item list-group-item-action ps-4 small <?php echo ($current_page == 'fast_followers_list.php') ? 'active' : ''; ?>"><i class="bi bi-list-stars me-2"></i> <span>Fast List</span></a>
             <a href="followers_list.php" class="list-group-item list-group-item-action ps-4 small <?php echo ($current_page == 'followers_list.php') ? 'active' : ''; ?>"><i class="bi bi-list-ul me-2"></i> <span>Manage Followers</span></a>
         </div>
         <?php $is_videos = ($current_page == 'boost_video.php' || $current_page == 'boost_reel.php' || $current_page == 'videos_list.php' || $current_page == 'reels_list.php' || $current_page == 'video_comments.php' || $current_page == 'boost_view.php'); ?>

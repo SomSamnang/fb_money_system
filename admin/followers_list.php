@@ -56,7 +56,7 @@ if (!in_array($status_filter, $allowed_statuses)) {
 }
 
 // Fetch Follower Pages
-$sql = "SELECT * FROM pages WHERE type='follower'";
+$sql = "SELECT * FROM pages WHERE type='follower' AND is_fast=0";
 if ($status_filter) {
     $sql .= " AND status = '" . $conn->real_escape_string($status_filter) . "'";
 }
@@ -171,7 +171,7 @@ body.dark-mode .form-control, body.dark-mode .form-select { background: #2d2d2d;
                                 <div class="mb-4">
                                     <div class="d-flex justify-content-between small fw-bold text-muted mb-1">
                                         <span><i class="bi bi-people-fill me-1"></i>Followers Gained</span>
-                                        <span><?php echo number_format($follow); ?> <?php if($target > 0) echo '/ ' . number_format($target); ?></span>
+                                        <span><?php echo formatNumber($follow); ?> <?php if($target > 0) echo '/ ' . formatNumber($target); ?></span>
                                     </div>
                                     <?php if($target > 0): ?>
                                     <div class="progress rounded-pill" style="height: 10px; background-color: #e9ecef;">

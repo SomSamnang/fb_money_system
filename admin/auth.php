@@ -65,4 +65,14 @@ if (isset($_SESSION['admin'])) {
         $u_act->close();
     }
 }
+
+// Helper function to format large numbers (e.g. 1.5K, 2M, 5B)
+if (!function_exists('formatNumber')) {
+    function formatNumber($num) {
+        if ($num >= 1000000000) return round($num / 1000000000, 1) . 'B';
+        if ($num >= 1000000) return round($num / 1000000, 1) . 'M';
+        if ($num >= 1000) return round($num / 1000, 1) . 'K';
+        return number_format($num);
+    }
+}
 ?>

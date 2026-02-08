@@ -28,9 +28,9 @@ if(isset($_POST['register_boost'])){
     $status = 'active';
     
     if(!empty($name) && !empty($link)){
-        if($type == 'page'){
-            $stmt = $conn->prepare("INSERT INTO pages (name, fb_link, target_clicks, type, status) VALUES (?, ?, ?, 'page', ?)");
-            $stmt->bind_param("ssis", $name, $link, $target, $status);
+        if($type == 'page' || $type == 'follower' || $type == 'post'){
+            $stmt = $conn->prepare("INSERT INTO pages (name, fb_link, target_clicks, type, status) VALUES (?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssiss", $name, $link, $target, $type, $status);
             $stmt->execute();
             $stmt->close();
         } else {
@@ -115,7 +115,15 @@ body.dark-mode .form-control, body.dark-mode .form-select { background: #2d2d2d;
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Boost Type</label>
-                                <div class="input-group"><span class="input-group-text"><i class="bi bi-collection-play-fill"></i></span><select name="type" class="form-select form-select-lg"><option value="view">Boost View</option><option value="page">Boost Page</option><option value="reel">Boost Reel</option><option value="video">Boost Video</option></select></div>
+                                <div class="input-group"><span class="input-group-text"><i class="bi bi-collection-play-fill"></i></span>
+                                <select name="type" class="form-select form-select-lg">
+                                    <option value="follower">Boost Follower</option>
+                                    <option value="page">Boost Page</option>
+                                    <option value="post">Boost Post</option>
+                                    <option value="view">Boost View</option>
+                                    <option value="reel">Boost Reel</option>
+                                    <option value="video">Boost Video</option>
+                                </select></div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Number (Target)</label>

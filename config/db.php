@@ -35,7 +35,7 @@ checkAndAddColumn($conn, 'admins', 'last_login', "DATETIME NULL DEFAULT NULL");
 
 // 2. Clicks Table
 $conn->query("CREATE TABLE IF NOT EXISTS clicks (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     page VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL,
     ip VARCHAR(50) NOT NULL,
@@ -78,14 +78,33 @@ $conn->query("CREATE TABLE IF NOT EXISTS notifications (
 $conn->query("CREATE TABLE IF NOT EXISTS server_metrics ( id INT AUTO_INCREMENT PRIMARY KEY, load_val FLOAT NOT NULL, recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP )");
 $conn->query("CREATE TABLE IF NOT EXISTS settings ( setting_key VARCHAR(50) PRIMARY KEY, setting_value TEXT )");
 $conn->query("CREATE TABLE IF NOT EXISTS pages ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100) NOT NULL, fb_link TEXT NOT NULL )");
-checkAndAddColumn($conn, 'pages', 'target_clicks', "INT DEFAULT 0");
-checkAndAddColumn($conn, 'pages', 'daily_limit', "INT DEFAULT 0");
+checkAndAddColumn($conn, 'pages', 'target_clicks', "BIGINT DEFAULT 0");
+checkAndAddColumn($conn, 'pages', 'daily_limit', "BIGINT DEFAULT 0");
+
+// Fix: Ensure columns are BIGINT to handle large numbers (e.g. 5000M)
+function ensureBigInt($conn, $table, $col) {
+    $res = $conn->query("SHOW COLUMNS FROM $table LIKE '$col'");
+    if ($res && $res->num_rows > 0) {
+        $row = $res->fetch_assoc();
+        if (stripos($row['Type'], 'bigint') === false) {
+            $conn->query("ALTER TABLE $table MODIFY COLUMN $col BIGINT DEFAULT 0");
+        }
+    }
+}
+ensureBigInt($conn, 'pages', 'target_clicks');
+ensureBigInt($conn, 'pages', 'daily_limit');
+
 checkAndAddColumn($conn, 'pages', 'type', "ENUM('page', 'follower', 'post') DEFAULT 'page'");
 // Ensure 'post' is added to the ENUM list if the column already exists
 $conn->query("ALTER TABLE pages MODIFY COLUMN type ENUM('page', 'follower', 'post') DEFAULT 'page'");
 checkAndAddColumn($conn, 'pages', 'paused_by_limit', "TINYINT(1) DEFAULT 0");
 checkAndAddColumn($conn, 'pages', 'status', "ENUM('active', 'completed', 'paused') DEFAULT 'active'");
 checkAndAddColumn($conn, 'pages', 'created_at', "TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
+checkAndAddColumn($conn, 'pages', 'is_fast', "TINYINT(1) DEFAULT 0");
+checkAndAddColumn($conn, 'pages', 'start_count', "BIGINT DEFAULT 0");
+ensureBigInt($conn, 'pages', 'start_count');
+checkAndAddColumn($conn, 'pages', 'speed', "VARCHAR(50) DEFAULT 'normal'");
+checkAndAddColumn($conn, 'pages', 'scheduled_at', "DATETIME NULL DEFAULT NULL");
 
 // Public Users Table
 $conn->query("CREATE TABLE IF NOT EXISTS users (
@@ -125,7 +144,7 @@ $conn->query("CREATE TABLE IF NOT EXISTS videos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     video_link TEXT NOT NULL,
-    target_views INT DEFAULT 0,
+    target_views BIGINT DEFAULT 0,
     points_per_view INT DEFAULT 1,
     duration INT DEFAULT 30,
     status ENUM('active', 'completed', 'paused') DEFAULT 'active',
@@ -133,14 +152,14 @@ $conn->query("CREATE TABLE IF NOT EXISTS videos (
 )");
 
 $conn->query("CREATE TABLE IF NOT EXISTS video_views (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     video_id INT NOT NULL,
     viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )");
 checkAndAddColumn($conn, 'videos', 'expires_at', "DATETIME NULL DEFAULT NULL");
 checkAndAddColumn($conn, 'videos', 'platform', "VARCHAR(50) DEFAULT 'youtube'");
-checkAndAddColumn($conn, 'videos', 'daily_limit', "INT DEFAULT 0");
+checkAndAddColumn($conn, 'videos', 'daily_limit', "BIGINT DEFAULT 0");
 checkAndAddColumn($conn, 'videos', 'paused_by_limit', "TINYINT(1) DEFAULT 0");
 
 // Video Interactions
@@ -159,4 +178,14 @@ $conn->query("CREATE TABLE IF NOT EXISTS video_comments (
     comment TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )");
+
+// Favorites Table
+$conn->query("CREATE TABLE IF NOT EXISTS favorites (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    link TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)");
+checkAndAddColumn($conn, 'favorites', 'category', "VARCHAR(50) DEFAULT 'General'");
 ?>

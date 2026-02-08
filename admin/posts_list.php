@@ -176,7 +176,7 @@ body.dark-mode .form-control, body.dark-mode .form-select { background: #2d2d2d;
                                 <div class="mb-4">
                                     <div class="d-flex justify-content-between small fw-bold text-muted mb-1">
                                         <span><i class="bi bi-hand-thumbs-up-fill me-1"></i>Interactions</span>
-                                        <span><?php echo number_format($total_clicks); ?> <?php if($target > 0) echo '/ ' . number_format($target); ?></span>
+                                        <span><?php echo formatNumber($total_clicks); ?> <?php if($target > 0) echo '/ ' . formatNumber($target); ?></span>
                                     </div>
                                     <?php if($target > 0): ?>
                                     <div class="progress rounded-pill" style="height: 10px; background-color: #e9ecef;">

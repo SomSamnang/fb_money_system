@@ -1,0 +1,2 @@
+0 * * * * /usr/bin/php /Applications/XAMPP/xamppfiles/htdocs/fb-money-system/admin/cron_expire_fast.php
+
